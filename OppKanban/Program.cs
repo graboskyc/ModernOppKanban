@@ -33,29 +33,45 @@ using (var scope = app.Services.CreateScope())
 {
     var mongoClient = scope.ServiceProvider.GetRequiredService<IMongoClient>();
     var db = mongoClient.GetDatabase("OppKanban");
+    const string viewName = "v__oppsAndMetadata";
 
     var collections = await db.ListCollectionNamesAsync();
     var allNames = await collections.ToListAsync();
 
-    if (!allNames.Contains("v__oppsAndMetadata"))
+    var pipeline = new[]
     {
-        var pipeline = new[]
+        new BsonDocument("$project", new BsonDocument
         {
-            new BsonDocument("$project", new BsonDocument
-            {
-                { "_id", 1 },
-                { "oppDetails", "$$ROOT" }
-            }),
-            new BsonDocument("$lookup", new BsonDocument
-            {
-                { "from", "metadata" },
-                { "localField", "_id" },
-                { "foreignField", "oppId" },
-                { "as", "oppMetadata" }
-            })
-        };
+            { "_id", 1 },
+            { "oppDetails", "$$ROOT" }
+        }),
+        new BsonDocument("$lookup", new BsonDocument
+        {
+            { "from", "metadata" },
+            { "localField", "_id" },
+            { "foreignField", "oppId" },
+            { "as", "oppMetadata" }
+        }),
+        new BsonDocument("$project", new BsonDocument
+        {
+            { "_id", 1 },
+            { "oppDetails", 1 },
+            { "oppMetadata", new BsonDocument("$first", "$oppMetadata") }
+        })
+    };
 
-        await db.CreateViewAsync("v__oppsAndMetadata", "opps", PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
+    if (allNames.Contains(viewName))
+    {
+        await db.RunCommandAsync<BsonDocument>(new BsonDocument
+        {
+            { "collMod", viewName },
+            { "viewOn", "opps" },
+            { "pipeline", new BsonArray(pipeline) }
+        });
+    }
+    else
+    {
+        await db.CreateViewAsync(viewName, "opps", PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
     }
 }
 

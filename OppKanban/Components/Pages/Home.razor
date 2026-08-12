@@ -4,7 +4,7 @@
 @using OppKanban.Datamodels
 @using OppKanban.Components.Shared
 @using MongoDB.Driver
-@inject IMongoCollection<OppBase> OppCollection
+@inject IMongoCollection<OppView> OppCollection
 
 <PageTitle>Home</PageTitle>
 
@@ -37,16 +37,23 @@ else
 			@foreach (var opp in _opps)
 			{
 				<tr>
-					<td>@opp.OppName</td>
-					<td>@opp.Status</td>
+					<td>@opp.OppDetails.OppName</td>
+					<td>@opp.OppDetails.Status</td>
 					<td>
-                        @opp.CloseDate.ToString("yyyy-MM-dd") 
-                        <small>(age @((DateTime.Now - opp.CreatedDate).Days) days)</small>
+                        @opp.OppDetails.CloseDate.ToString("yyyy-MM-dd") 
+                        <small>(age @((DateTime.Now - opp.OppDetails.CreatedDate).Days) days)</small>
                     </td>
 					<td>
-						<button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
-							<span class="material-symbols-outlined">preview</span>
-						</button>
+                        @if(opp.OppMetadata is not null) {
+                            <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
+                                <span class="material-symbols-outlined">preview</span>
+                            </button>
+
+                        } else {
+                            <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
+                                <span class="material-symbols-outlined">preview_off</span>
+                            </button>
+                        }
 					</td>
 				</tr>
 			}
@@ -60,7 +67,7 @@ else
 }
 
 @code {
-	private readonly List<OppBase> _opps = new();
+	private readonly List<OppView> _opps = new();
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
 	private bool _isMetadataModalOpen;
@@ -71,8 +78,8 @@ else
 		try
 		{
 			var items = await OppCollection
-				.Find(FilterDefinition<OppBase>.Empty)
-				.SortByDescending(x => x.CreatedDate)
+				.Find(FilterDefinition<OppView>.Empty)
+				.SortByDescending(x => x.OppDetails.CreatedDate)
 				.ToListAsync();
 
 			_opps.AddRange(items);
@@ -87,9 +94,9 @@ else
 		}
 	}
 
-	private void OpenMetadataModalAsync(OppBase opp)
+	private void OpenMetadataModalAsync(OppView opp)
 	{
-		_selectedOpp = opp;
+		_selectedOpp = opp.OppDetails;
 		_isMetadataModalOpen = true;
 	}
 

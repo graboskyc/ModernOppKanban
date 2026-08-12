@@ -11,6 +11,6 @@ namespace OppKanban.Datamodels
         [BsonElement("oppDetails")]
         public OppBase OppDetails {get;set;}
         [BsonElement("oppMetadata")]
-        public OppMetadata OppMetadata {get;set;}
+        public OppMetadata? OppMetadata {get;set;}
     }
 }

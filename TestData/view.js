@@ -6,12 +6,21 @@
     }
   },
   {
-    $lookup:
+    $lookup: {
+      from: "metadata",
+      localField: "_id",
+      foreignField: "oppId",
+      as: "oppMetadata"
+    }
+  },
+  {
+    $project:
       {
-        from: "metadata",
-        localField: "_id",
-        foreignField: "oppId",
-        as: "oppMetadata"
+        _id: 1,
+        oppDetails: 1,
+        oppMetadata: {
+          $first: "$oppMetadata"
+        }
       }
   }
 ]
