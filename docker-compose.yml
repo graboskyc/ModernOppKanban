@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  oppkanban:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oppkanban-app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - MongoDb__ConnectionString=mongodb://mongodb:27017/OppKanban
+    depends_on:
+      - mongodb
+    networks:
+      - oppkanban-network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: oppkanban-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: OppKanban
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - oppkanban-network
+    restart: unless-stopped
+
+volumes:
+  mongodb-data:
+    driver: local
+
+networks:
+  oppkanban-network:
+    driver: bridge
