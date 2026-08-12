@@ -40,6 +40,7 @@
 .kanban-lane-header h2 {
 	font-size: 1rem;
 	margin: 0;
+	color: var(--pico-primary);
 }
 
 .kanban-lane-header small {
@@ -70,7 +71,7 @@
 .opportunity-card {
 	background: #ffffff;
 	border: 1px solid #e1e6ea;
-	border-left: 4px solid #e48500;
+	border-left: 4px solid var(--pico-primary);
 	border-radius: 6px;
 	box-shadow: 0 2px 5px rgba(35, 48, 59, 0.08);
 	padding: 0.85rem;
@@ -96,12 +97,13 @@
 	font-size: 0.98rem;
 	line-height: 1.25;
 	margin: 0.2rem 0 0;
+	color: var(--pico-primary);
 }
 
 .metadata-button {
 	background: transparent;
 	border: 0;
-	color: #e48500;
+	color: var(--pico-primary);
 	cursor: pointer;
 	flex: 0 0 auto;
 	margin: -0.35rem -0.35rem 0 0;
@@ -129,6 +131,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	color: var(--pico-muted-border-color)
 }
 
 .opportunity-card .stage-diagram-container {

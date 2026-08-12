@@ -6,6 +6,7 @@
 @using OppKanban.Components.Shared
 @using MongoDB.Driver
 @inject IMongoCollection<OppView> OppCollection
+@inject IJSRuntime JS
 @using Microsoft.FluentUI.AspNetCore.Components;
 
 <PageTitle>Home</PageTitle>
@@ -103,6 +104,7 @@ else
 @code {
 	private readonly List<OppView> _opps = new();
 	private readonly IReadOnlyList<OpportunityStage> _stages = StageHelper.GetAllStages();
+	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private bool _showClosedStages = true;
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
@@ -110,6 +112,21 @@ else
 	private string _errorMessage = string.Empty;
 	private string _statusMessage = string.Empty;
 	private bool _showToast;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender)
+		{
+			return;
+		}
+
+		var storedValue = await JS.InvokeAsync<string?>("localStorage.getItem", ShowClosedStagesStorageKey);
+		if (bool.TryParse(storedValue, out var showClosedStages))
+		{
+			_showClosedStages = showClosedStages;
+			StateHasChanged();
+		}
+	}
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -168,8 +185,9 @@ else
 		? _stages
 		: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
 
-	private void ToggleClosedStages()
+	private async Task ToggleClosedStages()
 	{
 		_showClosedStages = !_showClosedStages;
+		await JS.InvokeVoidAsync("localStorage.setItem", ShowClosedStagesStorageKey, _showClosedStages.ToString());
 	}
 }
