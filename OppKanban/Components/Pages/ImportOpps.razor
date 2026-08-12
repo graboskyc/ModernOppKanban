@@ -1,0 +1,117 @@
+@page "/Import"
+@rendermode InteractiveServer
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@inject IMongoCollection<OppBase> OppCollection
+
+<PageTitle>Import Opportunities</PageTitle>
+
+<h1>Import Opportunities</h1>
+
+<p>Upload a CSV file with columns: <code>Id,OppName,Status,CreatedDate,CloseDate</code></p>
+
+<InputFile OnChange="HandleFileSelected" accept=".csv" />
+
+@if (!string.IsNullOrEmpty(_statusMessage))
+{
+    <p class="@_statusClass">@_statusMessage</p>
+}
+
+@if (_errors.Count > 0)
+{
+    <details>
+        <summary>Errors (@_errors.Count)</summary>
+        <ul>
+            @foreach (var err in _errors)
+            {
+                <li>@err</li>
+            }
+        </ul>
+    </details>
+}
+
+@code {
+    private string _statusMessage = string.Empty;
+    private string _statusClass = string.Empty;
+    private List<string> _errors = new();
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _statusMessage = string.Empty;
+        _statusClass = string.Empty;
+        _errors.Clear();
+
+        try
+        {
+            var file = e.File;
+            if (file is null) return;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var reader = new System.IO.StreamReader(stream);
+
+            var content = await reader.ReadToEndAsync();
+            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            var opps = new List<OppBase>();
+            int lineNumber = 0;
+
+            foreach (var line in lines)
+            {
+                lineNumber++;
+
+                if (lineNumber == 1) continue; // skip header
+
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var parts = line.Split(',');
+                if (parts.Length < 5)
+                {
+                    _errors.Add($"Line {lineNumber}: expected 5 columns, got {parts.Length}.");
+                    continue;
+                }
+
+                if (!DateTime.TryParse(parts[3].Trim(), out var createdDate))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid CreatedDate '{parts[3].Trim()}'.");
+                    continue;
+                }
+
+                if (!DateTime.TryParse(parts[4].Trim(), out var closeDate))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid CloseDate '{parts[4].Trim()}'.");
+                    continue;
+                }
+
+                opps.Add(new OppBase
+                {
+                    Id = parts[0].Trim(),
+                    OppName = parts[1].Trim(),
+                    Status = parts[2].Trim(),
+                    CreatedDate = createdDate,
+                    CloseDate = closeDate
+                });
+            }
+
+            if (opps.Count > 0)
+            {
+                await OppCollection.InsertManyAsync(opps);
+                _statusMessage = $"Imported {opps.Count} opportunit{(opps.Count == 1 ? "y" : "ies")} successfully.";
+                _statusClass = "text-success";
+            }
+            else
+            {
+                _statusMessage = "No valid records found to import.";
+                _statusClass = "text-warning";
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Error: {ex.Message}";
+            _statusClass = "text-danger";
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+}

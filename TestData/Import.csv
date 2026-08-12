@@ -1,0 +1,4 @@
+Id,OppName,Status,CreatedDate,CloseDate
+opp-001,Acme Deal,Open,2026-01-15,2026-09-30
+opp-002,IHAC Deal,Open,2026-02-15,2026-10-30
+opp-003,Foo Deal,Open,2026-03-15,2026-11-30

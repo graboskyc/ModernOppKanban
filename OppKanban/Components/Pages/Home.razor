@@ -1,7 +1,102 @@
 ﻿@page "/"
+@page "/Home"
+@using Microsoft.AspNetCore.Components.Web
+@using OppKanban.Datamodels
+@using OppKanban.Components.Shared
+@using MongoDB.Driver
+@inject IMongoCollection<OppBase> OppCollection
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Opportunities</h1>
 
-Welcome to your new app.
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+	<p class="text-danger">@_errorMessage</p>
+}
+else if (_isLoading)
+{
+	<p>Loading opportunities...</p>
+}
+else if (_opps.Count == 0)
+{
+	<p>No opportunities found.</p>
+}
+else
+{
+	<table>
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Name</th>
+				<th>Status</th>
+				<th>Created</th>
+				<th>Close</th>
+				<th>Metadata</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var opp in _opps)
+			{
+				<tr>
+					<td>@opp.Id</td>
+					<td>@opp.OppName</td>
+					<td>@opp.Status</td>
+					<td>@opp.CreatedDate.ToString("yyyy-MM-dd")</td>
+					<td>@opp.CloseDate.ToString("yyyy-MM-dd")</td>
+					<td>
+						<button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
+							<span class="material-symbols-outlined">preview</span>
+						</button>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@if (_isMetadataModalOpen)
+{
+	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" />
+}
+
+@code {
+	private readonly List<OppBase> _opps = new();
+	private OppBase? _selectedOpp;
+	private bool _isLoading = true;
+	private bool _isMetadataModalOpen;
+	private string _errorMessage = string.Empty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var items = await OppCollection
+				.Find(FilterDefinition<OppBase>.Empty)
+				.SortByDescending(x => x.CreatedDate)
+				.ToListAsync();
+
+			_opps.AddRange(items);
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to load opportunities: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private void OpenMetadataModalAsync(OppBase opp)
+	{
+		_selectedOpp = opp;
+		_isMetadataModalOpen = true;
+	}
+
+	private void CloseMetadataModal()
+	{
+		_isMetadataModalOpen = false;
+		_selectedOpp = null;
+	}
+}

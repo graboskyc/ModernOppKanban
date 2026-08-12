@@ -17,7 +17,9 @@ static void ConfigureMDBServices(IServiceCollection services)
 
     services.AddSingleton<IMongoClient>(new MongoClient(settings));
     //services.AddSingleton<IMongoDatabase>(x => x.GetRequiredService<IMongoClient>().GetDatabase("dbname"));
-    services.AddSingleton<IMongoCollection<Test>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<Test>("Test"));
+    services.AddSingleton<IMongoCollection<OppBase>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppBase>("opps"));    
+    services.AddSingleton<IMongoCollection<OppMetadata>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppMetadata>("metadata"));    
+    services.AddSingleton<IMongoCollection<OppView>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppView>("v__oppsAndMetadata"));
 
 }
 

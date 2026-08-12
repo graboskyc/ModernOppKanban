@@ -1,0 +1,194 @@
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@inject IMongoCollection<OppMetadata> MetadataCollection
+
+@if (Opportunity is not null)
+{
+	<dialog open @oncancel="HandleModalCancel">
+		<article>
+			<header>
+				<button type="button" aria-label="Close" rel="prev" @onclick="CloseModalAsync"></button>
+				<p>
+					<strong id="metadata-modal-title">Opportunity Metadata</strong>
+				</p>
+			</header>
+
+			<p><strong>@Opportunity.OppName</strong><br />@Opportunity.Id</p>
+
+			@if (_isLoading)
+			{
+				<p>Loading metadata...</p>
+			}
+			else
+			{
+				@if (!string.IsNullOrWhiteSpace(_errorMessage))
+				{
+					<p class="text-danger">@_errorMessage</p>
+				}
+
+				@if (!string.IsNullOrWhiteSpace(_statusMessage))
+				{
+					<p class="text-success">@_statusMessage</p>
+				}
+
+				<label for="sa-likelihood">SA likelihood</label>
+				<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
+				<small>@_metadataDraft.SaLikelihood.ToString("0")%</small>
+
+				<label for="metadata-assets">Assets</label>
+				<div class="grid">
+					<input id="metadata-assets" type="text" placeholder="Add an asset" @bind="_newAssetText" @bind:event="oninput" />
+					<button type="button" @onclick="AddAsset" disabled="@string.IsNullOrWhiteSpace(_newAssetText)">Add</button>
+				</div>
+
+				@if (_metadataDraft.Assets.Count == 0)
+				{
+					<small>No assets added yet.</small>
+				}
+				else
+				{
+					<ul>
+						@foreach (var asset in _metadataDraft.Assets)
+						{
+							<li>
+								<div class="grid">
+									<span>@asset</span>
+									<button type="button" class="secondary" @onclick="() => RemoveAsset(asset)">Delete</button>
+								</div>
+							</li>
+						}
+					</ul>
+				}
+
+				<footer>
+					<button type="button" class="secondary" @onclick="CloseModalAsync">Cancel</button>
+					<button type="button" @onclick="SaveMetadataAsync" disabled="@_isSaving">
+						@(_isSaving ? "Saving..." : "Save metadata")
+					</button>
+				</footer>
+			}
+		</article>
+	</dialog>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public OppBase? Opportunity { get; set; }
+
+	[Parameter]
+	public EventCallback OnClose { get; set; }
+
+	private OppMetadata _metadataDraft = new();
+	private string _newAssetText = string.Empty;
+	private bool _isLoading = true;
+	private bool _isSaving;
+	private string _errorMessage = string.Empty;
+	private string _statusMessage = string.Empty;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (Opportunity is null)
+		{
+			return;
+		}
+
+		_isLoading = true;
+		_isSaving = false;
+		_errorMessage = string.Empty;
+		_statusMessage = string.Empty;
+		_metadataDraft = new OppMetadata { OppId = Opportunity.Id };
+		_newAssetText = string.Empty;
+
+		try
+		{
+			var metadata = await MetadataCollection
+				.Find(x => x.OppId == Opportunity.Id)
+				.FirstOrDefaultAsync();
+
+			if (metadata is not null)
+			{
+				_metadataDraft = new OppMetadata
+				{
+					Id = metadata.Id,
+					OppId = metadata.OppId,
+					SaLikelihood = metadata.SaLikelihood,
+					Assets = metadata.Assets.ToList()
+				};
+			}
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to load metadata: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private Task HandleModalCancel()
+	{
+		return CloseModalAsync();
+	}
+
+	private async Task CloseModalAsync()
+	{
+		await OnClose.InvokeAsync();
+	}
+
+	private async Task SaveMetadataAsync()
+	{
+		if (Opportunity is null)
+		{
+			return;
+		}
+
+		_isSaving = true;
+		_errorMessage = string.Empty;
+		_statusMessage = string.Empty;
+		var parsedAssets = _metadataDraft.Assets.ToList();
+
+		try
+		{
+			var filter = Builders<OppMetadata>.Filter.Eq(x => x.OppId, Opportunity.Id);
+			var update = Builders<OppMetadata>.Update
+				.Set(x => x.OppId, Opportunity.Id)
+				.Set(x => x.SaLikelihood, _metadataDraft.SaLikelihood)
+				.Set(x => x.Assets, parsedAssets);
+
+			await MetadataCollection.UpdateOneAsync(
+				filter,
+				update,
+				new UpdateOptions { IsUpsert = true });
+
+			_metadataDraft.OppId = Opportunity.Id;
+			_metadataDraft.Assets = parsedAssets;
+			_statusMessage = "Metadata saved.";
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to save metadata: {ex.Message}";
+		}
+		finally
+		{
+			_isSaving = false;
+		}
+	}
+
+	private void AddAsset()
+	{
+		var asset = _newAssetText.Trim();
+		if (string.IsNullOrWhiteSpace(asset))
+		{
+			return;
+		}
+
+		_metadataDraft.Assets.Add(asset);
+		_newAssetText = string.Empty;
+	}
+
+	private void RemoveAsset(string asset)
+	{
+		_metadataDraft.Assets.Remove(asset);
+	}
+}
