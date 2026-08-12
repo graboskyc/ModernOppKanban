@@ -8,7 +8,7 @@
 
 <h1>Import Opportunities</h1>
 
-<p>Upload a CSV file with columns: <code>Id,OppName,Status,CreatedDate,CloseDate</code></p>
+<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate</code></p>
 
 <InputFile OnChange="HandleFileSelected" accept=".csv" />
 
@@ -64,29 +64,32 @@
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var parts = line.Split(',');
-                if (parts.Length < 5)
+                if (parts.Length < 8)
                 {
-                    _errors.Add($"Line {lineNumber}: expected 5 columns, got {parts.Length}.");
+                    _errors.Add($"Line {lineNumber}: expected 8 columns, got {parts.Length}.");
                     continue;
                 }
 
-                if (!DateTime.TryParse(parts[3].Trim(), out var createdDate))
+                if (!DateTime.TryParse(parts[6].Trim(), out var createdDate))
                 {
-                    _errors.Add($"Line {lineNumber}: invalid CreatedDate '{parts[3].Trim()}'.");
+                    _errors.Add($"Line {lineNumber}: invalid CreatedDate '{parts[6].Trim()}'.");
                     continue;
                 }
 
-                if (!DateTime.TryParse(parts[4].Trim(), out var closeDate))
+                if (!DateTime.TryParse(parts[7].Trim(), out var closeDate))
                 {
-                    _errors.Add($"Line {lineNumber}: invalid CloseDate '{parts[4].Trim()}'.");
+                    _errors.Add($"Line {lineNumber}: invalid CloseDate '{parts[7].Trim()}'.");
                     continue;
                 }
 
                 opps.Add(new OppBase
                 {
                     Id = parts[0].Trim(),
-                    OppName = parts[1].Trim(),
-                    Status = parts[2].Trim(),
+                    AccountName = parts[1].Trim(),
+                    OppName = parts[2].Trim(),
+                    OpportunityOwner = parts[3].Trim(),
+                    PrimarySA = parts[4].Trim(),
+                    Status = parts[5].Trim(),
                     CreatedDate = createdDate,
                     CloseDate = closeDate
                 });

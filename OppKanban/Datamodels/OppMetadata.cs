@@ -5,6 +5,14 @@ using System;
 namespace OppKanban.Datamodels
 {
     [BsonIgnoreExtraElements]
+    public class OppAsset {
+        [BsonElement("name")]
+        public string Name {get;set;} = "";
+        [BsonElement("link")]
+        public string Link {get;set;} = "";
+    }
+
+    [BsonIgnoreExtraElements]
     public class OppMetadata {
         [BsonElement("_id")]
         public ObjectId Id {get;set;}
@@ -13,6 +21,6 @@ namespace OppKanban.Datamodels
         [BsonElement("saLikelihood")]
         public double SaLikelihood {get;set;} = 0;
         [BsonElement("assets")]
-        public List<string> Assets {get;set;} = new List<string>();
+        public List<OppAsset> Assets {get;set;} = new List<OppAsset>();
     }
 }

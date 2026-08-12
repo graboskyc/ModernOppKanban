@@ -8,8 +8,14 @@ namespace OppKanban.Datamodels
     public class OppBase {
         [BsonElement("_id")]
         public string Id {get;set;}
+        [BsonElement("accountName")]
+        public string AccountName {get;set;}
         [BsonElement("oppName")]
         public string OppName {get;set;}
+        [BsonElement("opportunityOwner")]
+        public string OpportunityOwner {get;set;}
+        [BsonElement("primarySA")]
+        public string PrimarySA {get;set;}
         [BsonElement("status")]
         public string Status {get;set;}
         [BsonElement("createdDate")]

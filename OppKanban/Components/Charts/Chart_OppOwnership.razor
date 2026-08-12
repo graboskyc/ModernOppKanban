@@ -1,0 +1,76 @@
+@using MongoDB.Driver
+@using OppKanban.Datamodels
+@inject IJSRuntime JS
+@inject IMongoCollection<OppView> OppCollection
+
+<article>
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <p class="text-danger">@_errorMessage</p>
+    }
+    else if (_isLoading)
+    {
+        <p>Loading analytics...</p>
+    }
+    else if (_sunburstData.Count == 0)
+    {
+        <p>No opportunities found.</p>
+    }
+    else
+    {
+        <div @ref="_chartElement" style="min-height: 420px;"></div>
+    }
+</article>
+
+@code {
+    private readonly List<SunburstNode> _sunburstData = new();
+    private ElementReference _chartElement;
+    private bool _isLoading = true;
+    private bool _chartRendered;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var opportunities = await OppCollection
+                .Find(FilterDefinition<OppView>.Empty)
+                .ToListAsync();
+
+            _sunburstData.AddRange(opportunities
+                .Where(opportunity => opportunity.OppDetails is not null)
+                .GroupBy(opportunity => DisplayName(opportunity.OppDetails!.PrimarySA, "Unassigned SA"))
+                .OrderBy(group => group.Key)
+                .Select(saGroup => new SunburstNode(
+                    saGroup.Key,
+                    saGroup.Count(),
+                    saGroup
+                        .GroupBy(opportunity => DisplayName(opportunity.OppDetails!.OpportunityOwner, "Unassigned owner"))
+                        .OrderBy(ownerGroup => ownerGroup.Key)
+                        .Select(ownerGroup => new SunburstNode(ownerGroup.Key, ownerGroup.Count()))
+                        .ToList())));
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Unable to load analytics: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_chartRendered && !_isLoading && _sunburstData.Count > 0)
+        {
+            _chartRendered = true;
+            await JS.InvokeVoidAsync("oppKanbanSunburst.render", _chartElement, _sunburstData);
+        }
+    }
+
+    private static string DisplayName(string? value, string fallback) =>
+        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+
+    private sealed record SunburstNode(string X, int Y, List<SunburstNode>? Children = null);
+}

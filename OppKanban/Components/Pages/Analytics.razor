@@ -10,62 +10,7 @@
 
 <h1>Analytics</h1>
 
-<article>
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <p class="text-danger">@_errorMessage</p>
-    }
-    else if (_isLoading)
-    {
-        <p>Loading analytics...</p>
-    }
-    else if (_stageCounts.All(stage => stage.Count == 0))
-    {
-        <p>No opportunities found.</p>
-    }
-    else
-    {
-        <ApexChart TItem="StageCount" Title="Opportunities by stage">
-            <ApexPointSeries TItem="StageCount"
-                            Items="_stageCounts"
-                            Name="Opportunities"
-                            SeriesType="SeriesType.Pie"
-                            XValue="stage => stage.Name"
-                            YValue="stage => stage.Count" />
-        </ApexChart>
-    }
-</article>
-
-@code {
-	private readonly List<StageCount> _stageCounts = new();
-	private bool _isLoading = true;
-	private string _errorMessage = string.Empty;
-
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			var opportunities = await OppCollection
-				.Find(FilterDefinition<OppView>.Empty)
-				.ToListAsync();
-
-			var countsByStage = opportunities
-				.GroupBy(opportunity => opportunity.GetStageEnum())
-				.ToDictionary(group => group.Key, group => group.Count());
-
-			_stageCounts.AddRange(StageHelper.GetAllStages().Select(stage => new StageCount(
-				StageHelper.GetStageName(stage),
-				countsByStage.GetValueOrDefault(stage))));
-		}
-		catch (Exception ex)
-		{
-			_errorMessage = $"Unable to load analytics: {ex.Message}";
-		}
-		finally
-		{
-			_isLoading = false;
-		}
-	}
-
-	private sealed record StageCount(string Name, int Count);
-}
+<div class="grid">
+	<Chart_OppStage />
+	<Chart_OppOwnership />
+</div>

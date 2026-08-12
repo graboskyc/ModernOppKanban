@@ -1,0 +1,25 @@
+
+@if(Show) {
+    <article class="toast">
+        <div class="toast-icon">@ChildContent</div>
+        <div class="toast-msg">@Message</div>
+    </article>
+}
+
+@code {
+    [Parameter]
+    public string Message {get;set;}
+    [Parameter]
+    public bool Show {get;set;} = false;
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    System.Threading.Timer timer;
+
+    protected override async Task OnParametersSetAsync() {
+        if(Show) {
+            await Task.Delay(5000);
+            Show = false;
+        }
+    }
+}

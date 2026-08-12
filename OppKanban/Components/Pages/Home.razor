@@ -5,6 +5,7 @@
 @using OppKanban.Components.Shared
 @using MongoDB.Driver
 @inject IMongoCollection<OppView> OppCollection
+@using Microsoft.FluentUI.AspNetCore.Components;
 
 <PageTitle>Home</PageTitle>
 
@@ -28,6 +29,7 @@ else
 		<thead>
 			<tr>
 				<th>Name</th>
+				<th>Team</th>
 				<th>Status</th>
 				<th>Close</th>
 				<th>Metadata</th>
@@ -37,24 +39,31 @@ else
 			@foreach (var opp in _opps)
 			{
 				<tr>
-					<td>@opp.OppDetails.OppName</td>
+					<td>
+						<FluentIcon Value="@(new Icons.Regular.Size20.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.AccountName <br />
+						<FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OppName
+					</td>
+					<td>
+						<FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner <br />
+						<FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA
+					</td>
 					<td>
                         @opp.OppDetails.Status
-                        <StageDiagram CurrentStage="@opp.GetStageEnum()" Width="400px" Height="100px" />
+                        <StageDiagram CurrentStage="@opp.GetStageEnum()" Width="300px" Height="100px" />
                     </td>
 					<td>
-                        @opp.OppDetails.CloseDate.ToString("yyyy-MM-dd") 
+                        @opp.OppDetails.CloseDate.ToString("yyyy-MM-dd") <br />
                         <small style="font-size:small">(age @((DateTime.Now - opp.OppDetails.CreatedDate).Days) days)</small>
                     </td>
 					<td>
                         @if(opp.OppMetadata is not null) {
                             <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
-                                <span class="material-symbols-outlined">preview</span>
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
                             </button>
 
                         } else {
                             <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
-                                <span class="material-symbols-outlined">preview_off</span>
+                                <FluentIcon Value="@(new Icons.Regular.Size20.OpenOff())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
                             </button>
                         }
 					</td>
@@ -66,8 +75,12 @@ else
 
 @if (_isMetadataModalOpen)
 {
-	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" />
+	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" OnToast="ShowToast" />
 }
+
+<Toast Message="@_statusMessage" Show="_showToast">
+	<FluentIcon Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#647687" Value="@(new Icons.Regular.Size20.CheckboxPerson())" />
+</Toast>
 
 @code {
 	private readonly List<OppView> _opps = new();
@@ -75,6 +88,8 @@ else
 	private bool _isLoading = true;
 	private bool _isMetadataModalOpen;
 	private string _errorMessage = string.Empty;
+	private string _statusMessage = string.Empty;
+	private bool _showToast;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -107,5 +122,11 @@ else
 	{
 		_isMetadataModalOpen = false;
 		_selectedOpp = null;
+	}
+
+	private void ShowToast(string message)
+	{
+		_statusMessage = message;
+		_showToast = true;
 	}
 }

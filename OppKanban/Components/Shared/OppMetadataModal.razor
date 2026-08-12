@@ -1,6 +1,7 @@
 @using OppKanban.Datamodels
 @using MongoDB.Driver
-@inject IMongoCollection<OppMetadata> MetadataCollection
+@inject IMongoCollection<OppMetadata> MetadataCollection;
+@using Microsoft.FluentUI.AspNetCore.Components;
 
 @if (Opportunity is not null)
 {
@@ -21,23 +22,17 @@
 			}
 			else
 			{
-				@if (!string.IsNullOrWhiteSpace(_errorMessage))
-				{
-					<p class="text-danger">@_errorMessage</p>
-				}
-
-				@if (!string.IsNullOrWhiteSpace(_statusMessage))
-				{
-					<p class="text-success">@_statusMessage</p>
-				}
 
 				<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
 				<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
 
 				<label for="metadata-assets">Assets</label>
 				<div role="group">
-					<input id="metadata-assets" type="text" placeholder="Add an asset" @bind="_newAssetText" @bind:event="oninput" />
-					<button type="button" @onclick="AddAsset" disabled="@string.IsNullOrWhiteSpace(_newAssetText)"><span class="material-symbols-outlined">add</span></button>
+					<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
+					<input type="url" placeholder="Asset link" @bind="_newAssetLink" @bind:event="oninput" />
+					<button type="button" @onclick="AddAsset" disabled="@(!CanAddAsset)">
+						<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+					</button>
 				</div>
 
 				@if (_metadataDraft.Assets.Count != 0)	{
@@ -45,9 +40,11 @@
 						@foreach (var asset in _metadataDraft.Assets)
 						{
 							<tr>
-								<td>@asset</td>
+								<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
 								<td width="15%">
-									<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)"><span class="material-symbols-outlined">delete</span></button>
+									<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
+										<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+									</button>
 								</td>
 							</tr>
 						}
@@ -56,8 +53,11 @@
 
 				<footer>
 					<button type="button" class="secondary" @onclick="CloseModalAsync">Cancel</button>
-					<button type="button" @onclick="SaveMetadataAsync" disabled="@_isSaving">
-						@(_isSaving ? "Saving..." : "Save metadata")
+					<button type="button" @onclick="() => SaveMetadataAsync(false)" disabled="@_isSaving">
+						@(_isSaving ? "Saving..." : "Save")
+					</button>
+					<button type="button" @onclick="() => SaveMetadataAsync(true)" disabled="@_isSaving">
+						@(_isSaving ? "Saving..." : "Save & Close")
 					</button>
 				</footer>
 			}
@@ -72,12 +72,14 @@
 	[Parameter]
 	public EventCallback OnClose { get; set; }
 
+	[Parameter]
+	public EventCallback<string> OnToast { get; set; }
+
 	private OppMetadata _metadataDraft = new();
-	private string _newAssetText = string.Empty;
+	private string _newAssetName = string.Empty;
+	private string _newAssetLink = string.Empty;
 	private bool _isLoading = true;
 	private bool _isSaving;
-	private string _errorMessage = string.Empty;
-	private string _statusMessage = string.Empty;
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -88,10 +90,9 @@
 
 		_isLoading = true;
 		_isSaving = false;
-		_errorMessage = string.Empty;
-		_statusMessage = string.Empty;
 		_metadataDraft = new OppMetadata { OppId = Opportunity.Id };
-		_newAssetText = string.Empty;
+		_newAssetName = string.Empty;
+		_newAssetLink = string.Empty;
 
 		try
 		{
@@ -112,7 +113,7 @@
 		}
 		catch (Exception ex)
 		{
-			_errorMessage = $"Unable to load metadata: {ex.Message}";
+			await OnToast.InvokeAsync($"Unable to load metadata: {ex.Message}");
 		}
 		finally
 		{
@@ -130,7 +131,7 @@
 		await OnClose.InvokeAsync();
 	}
 
-	private async Task SaveMetadataAsync()
+	private async Task SaveMetadataAsync(bool closeAfterSave = false)
 	{
 		if (Opportunity is null)
 		{
@@ -138,8 +139,6 @@
 		}
 
 		_isSaving = true;
-		_errorMessage = string.Empty;
-		_statusMessage = string.Empty;
 		var parsedAssets = _metadataDraft.Assets.ToList();
 
 		try
@@ -153,35 +152,45 @@
 			await MetadataCollection.UpdateOneAsync(
 				filter,
 				update,
-				new UpdateOptions { IsUpsert = true });
+				new UpdateOptions { IsUpsert = true});
 
 			_metadataDraft.OppId = Opportunity.Id;
 			_metadataDraft.Assets = parsedAssets;
-			_statusMessage = "Metadata saved.";
+			await OnToast.InvokeAsync("Metadata saved.");
 		}
 		catch (Exception ex)
 		{
-			_errorMessage = $"Unable to save metadata: {ex.Message}";
+			await OnToast.InvokeAsync($"Unable to save metadata: {ex.Message}");
 		}
 		finally
 		{
 			_isSaving = false;
+			if (closeAfterSave)
+			{
+				await CloseModalAsync();
+			}
 		}
 	}
 
 	private void AddAsset()
 	{
-		var asset = _newAssetText.Trim();
-		if (string.IsNullOrWhiteSpace(asset))
+		var name = _newAssetName.Trim();
+		var link = _newAssetLink.Trim();
+		if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(link))
 		{
 			return;
 		}
 
-		_metadataDraft.Assets.Add(asset);
-		_newAssetText = string.Empty;
+		_metadataDraft.Assets.Add(new OppAsset { Name = name, Link = link });
+		_newAssetName = string.Empty;
+		_newAssetLink = string.Empty;
 	}
 
-	private void RemoveAsset(string asset)
+	private bool CanAddAsset =>
+		!string.IsNullOrWhiteSpace(_newAssetName) &&
+		!string.IsNullOrWhiteSpace(_newAssetLink);
+
+	private void RemoveAsset(OppAsset asset)
 	{
 		_metadataDraft.Assets.Remove(asset);
 	}
