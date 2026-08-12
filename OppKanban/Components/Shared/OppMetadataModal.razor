@@ -75,6 +75,9 @@
 	[Parameter]
 	public EventCallback<string> OnToast { get; set; }
 
+	[Parameter]
+	public EventCallback<OppMetadata> OnSaved { get; set; }
+
 	private OppMetadata _metadataDraft = new();
 	private string _newAssetName = string.Empty;
 	private string _newAssetLink = string.Empty;
@@ -157,6 +160,7 @@
 			_metadataDraft.OppId = Opportunity.Id;
 			_metadataDraft.Assets = parsedAssets;
 			await OnToast.InvokeAsync("Metadata saved.");
+			await OnSaved.InvokeAsync(_metadataDraft);
 		}
 		catch (Exception ex)
 		{

@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+
+<div>
+    <article>
+        <nav data-theme="dark">
+            <ul>
+                <li><img height="32" src="/favicon.png" style="height: 32px !important;" /></li>
+            </ul>
+            <ul>
+                <li><a href="/Home">Home</a></li>
+                <li><a href="/Analytics">Analytics</a></li>
+                <li><a href="/Import">Import</a></li>
+            </ul>
+        </nav>
+    </article>
+
+    <article>
+        @Body
+    </article>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

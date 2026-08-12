@@ -18,6 +18,10 @@ namespace OppKanban.Datamodels
         public ObjectId Id {get;set;}
         [BsonElement("oppId")]
         public string OppId {get;set;} = "";
+        [BsonElement("sizingLink")]
+        public string SizingLink {get;set;} = "";
+        [BsonElement("pocDoc")]
+        public string POCDoc {get;set;} = "";
         [BsonElement("saLikelihood")]
         public double SaLikelihood {get;set;} = 0;
         [BsonElement("assets")]

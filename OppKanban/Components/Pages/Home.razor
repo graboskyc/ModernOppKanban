@@ -1,5 +1,6 @@
 ﻿@page "/"
 @page "/Home"
+@layout Layout.FullWidthLayout
 @using Microsoft.AspNetCore.Components.Web
 @using OppKanban.Datamodels
 @using OppKanban.Components.Shared
@@ -9,7 +10,12 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Opportunities</h1>
+<div class="kanban-page-header">
+	<h1>Opportunities</h1>
+	<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
+		@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
+	</button>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
@@ -25,57 +31,69 @@ else if (_opps.Count == 0)
 }
 else
 {
-	<table>
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Team</th>
-				<th>Status</th>
-				<th>Close</th>
-				<th>Metadata</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var opp in _opps)
-			{
-				<tr>
-					<td>
-						<FluentIcon Value="@(new Icons.Regular.Size20.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.AccountName <br />
-						<FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OppName
-					</td>
-					<td>
-						<FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner <br />
-						<FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA
-					</td>
-					<td>
-                        @opp.OppDetails.Status
-                        <StageDiagram CurrentStage="@opp.GetStageEnum()" Width="300px" Height="100px" />
-                    </td>
-					<td>
-                        @opp.OppDetails.CloseDate.ToString("yyyy-MM-dd") <br />
-                        <small style="font-size:small">(age @((DateTime.Now - opp.OppDetails.CreatedDate).Days) days)</small>
-                    </td>
-					<td>
-                        @if(opp.OppMetadata is not null) {
-                            <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
-                            </button>
+	<div class="kanban-board" aria-label="Opportunity pipeline">
+		@foreach (var stage in VisibleStages)
+		{
+			var stageOpps = _opps.Where(opp => opp.GetStageEnum() == stage).ToList();
+			<div class="kanban-lane">
+				<header class="kanban-lane-header">
+					<div>
+						<h2>@StageHelper.GetStageName(stage)</h2>
+						<small>@StageHelper.GetStageDescription(stage)</small>
+					</div>
+					<span class="kanban-count">@stageOpps.Count</span>
+				</header>
 
-                        } else {
-                            <button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.OpenOff())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
-                            </button>
-                        }
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+				<div class="kanban-cards">
+					@foreach (var opp in stageOpps)
+					{
+						<article class="opportunity-card">
+							<div class="opportunity-card-heading">
+								<div>
+									<h3>@opp.OppDetails.OppName</h3>
+									<h6 class="account-name">@opp.OppDetails.AccountName</h6>
+								</div>
+								<button class="metadata-button" aria-label="Open metadata for @opp.OppDetails.OppName" title="Open metadata" @onclick="() => OpenMetadataModalAsync(opp)">
+									@if (opp.OppMetadata is not null)
+									{
+										<FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+									}
+									else
+									{
+										<FluentIcon Value="@(new Icons.Regular.Size20.OpenOff())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+									}
+								</button>
+							</div>
+
+							<div class="opportunity-people">
+								<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner</span>
+								<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA</span>
+							</div>
+
+							<StageDiagram CurrentStage="@opp.GetStageEnum()" Width="100%" Height="70px" />
+
+							<footer class="opportunity-card-footer">
+								<span>
+									<FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+									@opp.OppDetails.CloseDate.ToString("yyyy-MM-dd")
+								</span>
+								<span>@((DateTime.Now - opp.OppDetails.CreatedDate).Days)d old</span>
+							</footer>
+						</article>
+					}
+					@if (stageOpps.Count == 0)
+					{
+						<div class="empty-lane">No opportunities</div>
+					}
+				</div>
+			</div>
+		}
+	</div>
 }
 
 @if (_isMetadataModalOpen)
 {
-	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" OnToast="ShowToast" />
+	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" OnToast="ShowToast" OnSaved="HandleMetadataSaved" />
 }
 
 <Toast Message="@_statusMessage" Show="_showToast">
@@ -84,6 +102,8 @@ else
 
 @code {
 	private readonly List<OppView> _opps = new();
+	private readonly IReadOnlyList<OpportunityStage> _stages = StageHelper.GetAllStages();
+	private bool _showClosedStages = true;
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
 	private bool _isMetadataModalOpen;
@@ -124,9 +144,32 @@ else
 		_selectedOpp = null;
 	}
 
+	private void HandleMetadataSaved(OppMetadata metadata)
+	{
+		if (_selectedOpp is null)
+		{
+			return;
+		}
+
+		var opp = _opps.FirstOrDefault(x => x.OppDetails.Id == _selectedOpp.Id);
+		if (opp is not null)
+		{
+			opp.OppMetadata = metadata;
+		}
+	}
+
 	private void ShowToast(string message)
 	{
 		_statusMessage = message;
 		_showToast = true;
+	}
+
+	private IReadOnlyList<OpportunityStage> VisibleStages => _showClosedStages
+		? _stages
+		: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
+
+	private void ToggleClosedStages()
+	{
+		_showClosedStages = !_showClosedStages;
 	}
 }
