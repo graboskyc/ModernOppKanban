@@ -94,7 +94,15 @@
 
             if (opps.Count > 0)
             {
-                await OppCollection.InsertManyAsync(opps);
+                var replaceOptions = new ReplaceOptions { IsUpsert = true };
+                foreach (var opp in opps)
+                {
+                    await OppCollection.ReplaceOneAsync(
+                        x => x.Id == opp.Id,
+                        opp,
+                        replaceOptions);
+                }
+
                 _statusMessage = $"Imported {opps.Count} opportunit{(opps.Count == 1 ? "y" : "ies")} successfully.";
                 _statusClass = "text-success";
             }

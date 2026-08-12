@@ -1,5 +1,4 @@
 .stage-diagram-container {
-    padding: 20px;
     background: transparent;
     border-radius: 8px;
     display: flex;
@@ -17,7 +16,7 @@
 }
 
 .stage-line {
-    stroke: #bdc3c7;
+    stroke: var(--pico-h3-color);
     stroke-width: 2;
 }
 
@@ -39,14 +38,22 @@
 .stage-circle.active {
     opacity: 1;
     filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
-    stroke: white;
+    stroke: var(--pico-h1-color);
     stroke-width: 2;
+}
+
+.stage-circle.closed-won {
+    fill: var(--pico-ins-color);
+}
+
+.stage-circle.closed-lost {
+    fill: var(--pico-del-color);
 }
 
 .stage-label {
     font-weight: bold;
     font-size: 14px;
-    fill: white;
+    fill: var(--pico-h1-color);
     pointer-events: none;
     user-select: none;
 }

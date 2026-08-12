@@ -5,7 +5,7 @@
 <div class="stage-diagram-container" style="width: @Width; height: @Height;">
     <svg class="stage-diagram" viewBox="0 50 @GetViewBoxWidth() 150" preserveAspectRatio="xMinYMin meet">
         <!-- Draw connecting lines between stages -->
-        @for (int i = 0; i < AllStages.Count - 1; i++)
+        @for (int i = 0; i < DiagramStages.Count - 1; i++)
         {
             var x1 = GetCircleX(i) + 25;
             var x2 = GetCircleX(i + 1) - 25;
@@ -13,19 +13,24 @@
         }
 
         <!-- Draw circles for each stage -->
-        @for (int i = 0; i < AllStages.Count; i++)
+        @for (int i = 0; i < DiagramStages.Count; i++)
         {
-            var stage = AllStages[i];
-            var isCurrentStage = stage == CurrentStage;
-            var isFutureStage = i > AllStages.IndexOf(CurrentStage);
+            var stage = DiagramStages[i];
+            var isTerminalStage = stage == OpportunityStage.ClosedWon;
+            var isCurrentStage = stage == CurrentStage ||
+                (isTerminalStage && (CurrentStage == OpportunityStage.ClosedWon || CurrentStage == OpportunityStage.ClosedLost));
+            var isFutureStage = !isCurrentStage && AllStages.IndexOf(stage) > AllStages.IndexOf(CurrentStage);
             var x = GetCircleX(i);
+            var terminalClass = isCurrentStage && isTerminalStage
+                ? (CurrentStage == OpportunityStage.ClosedWon ? "closed-won" : "closed-lost")
+                : "";
             
             <circle 
                 cx="@x" 
                 cy="75" 
                 r="@(isCurrentStage ? 22 : 18)" 
-                class="stage-circle @(isCurrentStage ? "active" : "") @(isFutureStage ? "future" : "")"
-                title="@StageHelper.GetStageName(stage)" />
+                class="stage-circle @(isCurrentStage ? "active" : "") @(isFutureStage ? "future" : "") @terminalClass"
+                title="@(isTerminalStage ? StageHelper.GetStageName(CurrentStage) : StageHelper.GetStageName(stage))" />
         }
     </svg>
 </div>
@@ -42,22 +47,25 @@
 
     private List<OpportunityStage> AllStages = new();
 
+    private List<OpportunityStage> DiagramStages = new();
+
     protected override void OnInitialized()
     {
         AllStages = StageHelper.GetAllStages();
+        DiagramStages = AllStages.Take(AllStages.Count - 1).ToList();
     }
 
     private double GetCircleX(int index)
     {
-        if (AllStages.Count <= 1) return 50;
+        if (DiagramStages.Count <= 1) return 50;
         
-        double spacing = (GetViewBoxWidth() - 50) / (AllStages.Count - 1);
+        double spacing = (GetViewBoxWidth() - 50) / (DiagramStages.Count - 1);
         return 25 + (index * spacing);
     }
 
     private int GetViewBoxWidth()
     {
-        return Math.Max(300, AllStages.Count * 70);
+        return Math.Max(300, DiagramStages.Count() * 70);
     }
 }
 
