@@ -1,4 +1,5 @@
 using OppKanban.Components;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using OppKanban.Datamodels;
 
@@ -26,6 +27,37 @@ static void ConfigureMDBServices(IServiceCollection services)
 ConfigureMDBServices(builder.Services);
 
 var app = builder.Build();
+
+// Ensure the view exists on startup
+using (var scope = app.Services.CreateScope())
+{
+    var mongoClient = scope.ServiceProvider.GetRequiredService<IMongoClient>();
+    var db = mongoClient.GetDatabase("OppKanban");
+
+    var collections = await db.ListCollectionNamesAsync();
+    var allNames = await collections.ToListAsync();
+
+    if (!allNames.Contains("v__oppsAndMetadata"))
+    {
+        var pipeline = new[]
+        {
+            new BsonDocument("$project", new BsonDocument
+            {
+                { "_id", 1 },
+                { "oppDetails", "$$ROOT" }
+            }),
+            new BsonDocument("$lookup", new BsonDocument
+            {
+                { "from", "metadata" },
+                { "localField", "_id" },
+                { "foreignField", "oppId" },
+                { "as", "oppMetadata" }
+            })
+        };
+
+        await db.CreateViewAsync("v__oppsAndMetadata", "opps", PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
