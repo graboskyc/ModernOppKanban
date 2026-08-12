@@ -27,10 +27,8 @@ else
 	<table>
 		<thead>
 			<tr>
-				<th>Id</th>
 				<th>Name</th>
 				<th>Status</th>
-				<th>Created</th>
 				<th>Close</th>
 				<th>Metadata</th>
 			</tr>
@@ -39,11 +37,12 @@ else
 			@foreach (var opp in _opps)
 			{
 				<tr>
-					<td>@opp.Id</td>
 					<td>@opp.OppName</td>
 					<td>@opp.Status</td>
-					<td>@opp.CreatedDate.ToString("yyyy-MM-dd")</td>
-					<td>@opp.CloseDate.ToString("yyyy-MM-dd")</td>
+					<td>
+                        @opp.CloseDate.ToString("yyyy-MM-dd") 
+                        <small>(age @((DateTime.Now - opp.CreatedDate).Days) days)</small>
+                    </td>
 					<td>
 						<button class="secondary outline" @onclick="() => OpenMetadataModalAsync(opp)">
 							<span class="material-symbols-outlined">preview</span>

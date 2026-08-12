@@ -31,33 +31,27 @@
 					<p class="text-success">@_statusMessage</p>
 				}
 
-				<label for="sa-likelihood">SA likelihood</label>
+				<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
 				<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
-				<small>@_metadataDraft.SaLikelihood.ToString("0")%</small>
 
 				<label for="metadata-assets">Assets</label>
-				<div class="grid">
+				<div role="group">
 					<input id="metadata-assets" type="text" placeholder="Add an asset" @bind="_newAssetText" @bind:event="oninput" />
-					<button type="button" @onclick="AddAsset" disabled="@string.IsNullOrWhiteSpace(_newAssetText)">Add</button>
+					<button type="button" @onclick="AddAsset" disabled="@string.IsNullOrWhiteSpace(_newAssetText)"><span class="material-symbols-outlined">add</span></button>
 				</div>
 
-				@if (_metadataDraft.Assets.Count == 0)
-				{
-					<small>No assets added yet.</small>
-				}
-				else
-				{
-					<ul>
+				@if (_metadataDraft.Assets.Count != 0)	{
+					<table><tbody>
 						@foreach (var asset in _metadataDraft.Assets)
 						{
-							<li>
-								<div class="grid">
-									<span>@asset</span>
-									<button type="button" class="secondary" @onclick="() => RemoveAsset(asset)">Delete</button>
-								</div>
-							</li>
+							<tr>
+								<td>@asset</td>
+								<td width="15%">
+									<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)"><span class="material-symbols-outlined">delete</span></button>
+								</td>
+							</tr>
 						}
-					</ul>
+					</tbody></table>
 				}
 
 				<footer>
