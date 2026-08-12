@@ -1,4 +1,5 @@
 using OppKanban.Components;
+using ApexCharts;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using OppKanban.Datamodels;
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddApexCharts();
 
 static void ConfigureMDBServices(IServiceCollection services)
 {
