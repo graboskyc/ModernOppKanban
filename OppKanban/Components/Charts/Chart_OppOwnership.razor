@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @inject IMongoCollection<OppView> OppCollection
 
-<article>
+<article data-theme="light">
     @if (!string.IsNullOrWhiteSpace(_errorMessage))
     {
         <p class="text-danger">@_errorMessage</p>
