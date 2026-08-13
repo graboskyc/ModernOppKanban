@@ -1,5 +1,25 @@
 Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR
 opp-001,Acme Corp,Acme Deal,Jane Doe,Mary Shelly,Discovery,2026-01-15,2026-09-30,100000
-opp-002,IHAC Inc,IHAC Deal,Bill Smith,Mary Shelly,Validation,2026-02-15,2026-10-30,250000
+opp-002,IHAC Inc,IHAC Deal,Bill Smith,Sofia Patel,Validation,2026-02-15,2026-10-30,250000
 opp-003,Bad Programmers Inc,Foo Deal,Frank Roberts,Robert Paulson,ClosedLost,2026-03-15,2026-11-30,75000
-opp-004,Bad Programmers Inc,Bar Deal,Frank Roberts,Robert Paulson,ClosedWon,2026-03-15,2026-11-30,125000
+opp-004,Bad Programmers Inc,Bar Deal,Frank Roberts,Liam Chen,ClosedWon,2026-03-15,2026-11-30,125000
+opp-005,Northwind Traders,Cloud Migration,Alice Nguyen,Robert Paulson,Discovery,2026-04-02,2026-12-15,180000
+opp-006,Contoso Ltd,Data Platform Expansion,Bill Smith,Mary Shelly,Validation,2026-04-08,2027-01-20,320000
+opp-007,Fabrikam,Security Assessment,Carlos Mendes,Sofia Patel,Scope,2026-04-14,2026-12-05,95000
+opp-008,Adventure Works,Analytics Modernization,Jane Doe,Hannah Ortiz,ClosedWon,2026-04-21,2026-10-18,210000
+opp-009,Tailspin Toys,Infrastructure Refresh,Elena Rossi,Robert Paulson,Discovery,2026-05-03,2027-02-12,145000
+opp-010,Woodgrove Bank,Customer Portal,Frank Roberts,Mary Shelly,Validation,2026-05-09,2026-11-22,275000
+opp-011,Proseware,Application Integration,Naomi Brooks,Sofia Patel,PreOnboarding,2026-05-16,2027-01-08,160000
+opp-012,Graphic Design Institute,Managed Services,Bill Smith,Grace Wilson,ClosedLost,2026-05-23,2026-09-25,85000
+opp-013,Lucerne Publishing,Workflow Automation,Marcus Lee,Robert Paulson,Discovery,2026-06-01,2027-02-28,125000
+opp-014,Fabrikam Residences,Network Optimization,Jane Doe,Mary Shelly,Validation,2026-06-07,2026-12-19,230000
+opp-015,Humongous Insurance,Claims Processing,David Kim,Liam Chen,Handover,2026-06-14,2027-01-30,410000
+opp-016,City Power and Light,Observability Rollout,Frank Roberts,Hannah Ortiz,ClosedWon,2026-06-21,2026-11-14,195000
+opp-017,Coho Winery,Point of Sale Upgrade,Alice Nguyen,Robert Paulson,Discovery,2026-07-02,2027-03-15,70000
+opp-018,Alpine Ski House,Digital Workplace,Bill Smith,Grace Wilson,Validation,2026-07-09,2027-02-05,155000
+opp-019,Wide World Importers,Supply Chain Insights,Carlos Mendes,Sofia Patel,Scope,2026-07-16,2027-01-17,360000
+opp-020,Consolidated Messenger,API Gateway,Jane Doe,Mary Shelly,ClosedLost,2026-07-24,2026-10-31,110000
+opp-021,Fourth Coffee,Identity Modernization,Elena Rossi,Liam Chen,Discovery,2026-08-01,2027-03-22,205000
+opp-022,Blue Yonder Airlines,Revenue Forecasting,Marcus Lee,Hannah Ortiz,Validation,2026-08-08,2027-02-26,285000
+opp-023,Southridge Video,Media Archive,David Kim,Robert Paulson,PreOnboarding,2026-08-15,2027-01-25,135000
+opp-024,School of Fine Art,Learning Management,Naomi Brooks,Grace Wilson,ClosedWon,2026-08-22,2026-12-12,175000
