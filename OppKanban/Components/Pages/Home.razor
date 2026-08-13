@@ -66,9 +66,14 @@ else
 								</button>
 							</div>
 
-							<div class="opportunity-people">
-								<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner</span>
-								<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA</span>
+							<div class="grid" style="margin-bottom:.9rem">
+								<div class="opportunity-people">
+									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner</span>
+									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA</span>
+								</div>
+								<div>
+									<span class="opportunity-err">@opp.OppDetails.ErrRounded</span>
+								</div>
 							</div>
 
 							<StageDiagram CurrentStage="@opp.GetStageEnum()" Width="100%" Height="70px" />

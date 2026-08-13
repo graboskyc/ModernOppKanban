@@ -1,5 +1,6 @@
 @page "/Import"
 @rendermode InteractiveServer
+@using System.Globalization
 @using OppKanban.Datamodels
 @using MongoDB.Driver
 @inject IMongoCollection<OppBase> OppCollection
@@ -8,7 +9,7 @@
 
 <h1>Import Opportunities</h1>
 
-<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate</code></p>
+<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR</code></p>
 
 <InputFile OnChange="HandleFileSelected" accept=".csv" />
 
@@ -64,9 +65,9 @@
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var parts = line.Split(',');
-                if (parts.Length < 8)
+                if (parts.Length < 9)
                 {
-                    _errors.Add($"Line {lineNumber}: expected 8 columns, got {parts.Length}.");
+                    _errors.Add($"Line {lineNumber}: expected 9 columns, got {parts.Length}.");
                     continue;
                 }
 
@@ -82,6 +83,12 @@
                     continue;
                 }
 
+                if (!decimal.TryParse(parts[8].Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var err))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid ERR '{parts[8].Trim()}'.");
+                    continue;
+                }
+
                 opps.Add(new OppBase
                 {
                     Id = parts[0].Trim(),
@@ -91,7 +98,8 @@
                     PrimarySA = parts[4].Trim(),
                     Status = parts[5].Trim(),
                     CreatedDate = createdDate,
-                    CloseDate = closeDate
+                    CloseDate = closeDate,
+                    Err = err
                 });
             }
 

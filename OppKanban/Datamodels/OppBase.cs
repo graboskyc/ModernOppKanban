@@ -22,6 +22,30 @@ namespace OppKanban.Datamodels
         public DateTime CreatedDate {get;set;}
         [BsonElement("closeDate")]
         public DateTime CloseDate {get;set;}
+        [BsonElement("err")]
+        public decimal Err {get;set;}
+        public string ErrRounded
+        {
+            get
+            {
+                var absoluteErr = Math.Abs(Err);
+                var suffix = "";
+                var divisor = 1m;
+
+                if (absoluteErr >= 1_000_000m)
+                {
+                    suffix = "M";
+                    divisor = 1_000_000m;
+                }
+                else if (absoluteErr >= 1_000m)
+                {
+                    suffix = "K";
+                    divisor = 1_000m;
+                }
+
+                return $"${Err / divisor:0.#}{suffix}";
+            }
+        }
 
     }
 }
