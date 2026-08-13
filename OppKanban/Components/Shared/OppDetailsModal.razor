@@ -7,41 +7,59 @@
 		<article class="opportunity-details-modal">
 			<header>
 				<button type="button" aria-label="Close" rel="prev" @onclick="CloseModalAsync"></button>
-				<p>
-					<strong>@Opportunity.OppDetails.OppName</strong><br />
-					<small class="account-name">@Opportunity.OppDetails.AccountName</small>
-				</p>
+				<p><strong>Opportunity Details</strong></p>
 			</header>
 
-			<div class="grid" style="margin-bottom:.9rem">
-				<div class="opportunity-people">
-					<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @Opportunity.OppDetails.OpportunityOwner</span>
-					<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @Opportunity.OppDetails.PrimarySA</span>
-				</div>
-				<div>
-					<span class="opportunity-err">@Opportunity.OppDetails.ErrRounded</span>
-				</div>
-			</div>
-
-			<StageDiagram CurrentStage="@Opportunity.GetStageEnum()" Width="100%" Height="90px" />
-
-			<footer class="opportunity-card-footer">
-				<span>
-					<FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
-					@Opportunity.OppDetails.CloseDate.ToString("yyyy-MM-dd")
-				</span>
-				<span>@((DateTime.Now - Opportunity.OppDetails.CreatedDate).Days)d old</span>
-			</footer>
+			<h3>Basic Information</h3>
+			<table class="striped">
+				<tbody>
+					<tr>
+						<td title="Account Name"><FluentIcon Value="@(new Icons.Regular.Size20.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.AccountName</td>
+					</tr>
+					<tr>
+						<td title="Opportunity Name"><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.OppName</td>
+					</tr>
+					<tr>
+						<td title="Opportunity Owner"><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.OpportunityOwner</td>
+					</tr>
+					<tr>
+						<td title="Primary SA"><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.PrimarySA</td>
+					</tr>
+					<tr>
+						<td title="ERR"><FluentIcon Value="@(new Icons.Regular.Size20.Money())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.Err</td>
+					</tr>
+					<tr>
+						<td title="Close Date"><FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@Opportunity.OppDetails.CloseDate.ToString("yyyy-MM-dd")</td>
+					</tr>
+					<tr>
+						<td title="Created Date"><FluentIcon Value="@(new Icons.Regular.Size20.CalendarError())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@((DateTime.Now - Opportunity.OppDetails.CreatedDate).Days)d old</td>
+					</tr>
+					<tr>
+						<td title="Current Stage"><FluentIcon Value="@(new Icons.Regular.Size20.ColumnTriple())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td><StageDiagram CurrentStage="@Opportunity.GetStageEnum()" Width="100%" Height="90px" /></td>
+					</tr>
+					@if (Opportunity.OppMetadata is not null) {
+						<tr>
+							<td title="SA Likelihood"><FluentIcon Value="@(new Icons.Regular.Size20.DocumentPercent())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td>@Opportunity.OppMetadata.SaLikelihood.ToString("0")%</td>
+						</tr>
+					}
+				</tbody>
+			</table>
 
 			@if (Opportunity.OppMetadata is not null)
 			{
-				<hr />
-				<p><strong>SA likelihood</strong> @Opportunity.OppMetadata.SaLikelihood.ToString("0")%</p>
-
 				@if (Opportunity.OppMetadata.Assets.Count > 0)
 				{
-					<p><strong>Assets</strong></p>
-					<table><tbody>
+					<h3>Assets</h3>
+					<table class="striped"><tbody>
 						@foreach (var asset in Opportunity.OppMetadata.Assets)
 						{
 							<tr>
