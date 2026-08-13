@@ -10,14 +10,26 @@
 @inject IJSRuntime JS
 @using Microsoft.FluentUI.AspNetCore.Components;
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Opportunities</PageTitle>
+
+<h1>Opportunities</h1>
 
 <div class="kanban-page-header">
-	<h1>Opportunities</h1>
-	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" />
 	<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
 		@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
 	</button>
+
+	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" />
+
+	<label class="close-year-filter">
+		<span>Close years</span>
+		<select multiple size="4" @bind="_selectedCloseYears" @bind:after="PersistCloseYearsAsync" aria-label="Filter opportunities by close year">
+			@foreach (var year in CloseYears)
+			{
+				<option value="@year">@year</option>
+			}
+		</select>
+	</label>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
@@ -37,7 +49,7 @@ else
 	<div class="kanban-board" aria-label="Opportunity pipeline">
 		@foreach (var stage in VisibleStages)
 		{
-			var stageOpps = _opps.Where(opp => opp.GetStageEnum() == stage).ToList();
+			var stageOpps = FilteredOpps.Where(opp => opp.GetStageEnum() == stage).ToList();
 			<div class="kanban-lane" @ondragover="HandleDragOver" @ondragover:preventDefault="true" @ondrop:preventDefault="true" @ondrop="() => MoveOpportunityAsync(stage)">
 				<header class="kanban-lane-header">
 					<div>
@@ -117,7 +129,9 @@ else
 	private readonly List<OppView> _opps = new();
 	private readonly IReadOnlyList<OpportunityStage> _stages = StageHelper.GetAllStages();
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
+	private const string CloseYearsStorageKey = "opp-kanban:close-years";
 	private bool _showClosedStages = true;
+	private string[] _selectedCloseYears = Array.Empty<string>();
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
 	private bool _isMetadataModalOpen;
@@ -136,12 +150,19 @@ else
 			return;
 		}
 
-		var storedValue = await JS.InvokeAsync<string?>("localStorage.getItem", ShowClosedStagesStorageKey);
+		var storedValue = await JS.InvokeAsync<string?>("oppFilterStorage.getValue", ShowClosedStagesStorageKey);
 		if (bool.TryParse(storedValue, out var showClosedStages))
 		{
 			_showClosedStages = showClosedStages;
-			StateHasChanged();
 		}
+
+		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
+		if (storedCloseYears is not null)
+		{
+			_selectedCloseYears = storedCloseYears;
+		}
+
+		StateHasChanged();
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -276,9 +297,23 @@ else
 		? _stages
 		: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
 
+	private IEnumerable<int> CloseYears => _opps
+		.Select(opp => opp.OppDetails.CloseDate.Year)
+		.Distinct()
+		.OrderByDescending(year => year);
+
+	private IEnumerable<OppView> FilteredOpps => _selectedCloseYears.Length == 0
+		? _opps
+		: _opps.Where(opp => _selectedCloseYears.Contains(opp.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal));
+
+	private async Task PersistCloseYearsAsync()
+	{
+		await JS.InvokeVoidAsync("oppFilterStorage.setCloseYears", CloseYearsStorageKey, _selectedCloseYears);
+	}
+
 	private async Task ToggleClosedStages()
 	{
 		_showClosedStages = !_showClosedStages;
-		await JS.InvokeVoidAsync("localStorage.setItem", ShowClosedStagesStorageKey, _showClosedStages.ToString());
+		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowClosedStagesStorageKey, _showClosedStages.ToString());
 	}
 }

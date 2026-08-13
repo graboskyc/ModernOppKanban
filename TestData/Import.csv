@@ -1,16 +1,16 @@
 Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR
 opp-001,Acme Corp,Acme Deal,Jane Doe,Mary Shelly,Discovery,1/15/2026,9/30/2026,100000
 opp-002,IHAC Inc,IHAC Deal,Bill Smith,Sofia Patel,Validation,2/15/2026,10/30/2026,250000
-opp-003,Bad Programmers Inc,Foo Deal,Frank Roberts,Robert Paulson,ClosedLost,3/15/2026,11/30/2026,75000
+opp-003,Bad Programmers Inc,Foo Deal,Frank Roberts,Robert Paulson,ClosedLost,3/15/2024,11/30/2024,75000
 opp-004,Bad Programmers Inc,Bar Deal,Frank Roberts,Liam Chen,ClosedWon,3/15/2026,11/30/2026,125000
 opp-005,Bad Programmers Inc,Baz Deal,Alice Nguyen,Robert Paulson,Discovery,4/2/2026,12/15/2026,180000
 opp-006,Contoso Ltd,Data Platform Expansion,Bill Smith,Mary Shelly,Validation,4/8/2026,1/20/2027,320000
 opp-007,Fabrikam,Security Assessment,Carlos Mendes,Sofia Patel,Scope,4/14/2026,12/5/2026,95000
-opp-008,Adventure Works,Analytics Modernization,Jane Doe,Hannah Ortiz,ClosedWon,4/21/2026,10/18/2026,210000
+opp-008,Adventure Works,Analytics Modernization,Jane Doe,Hannah Ortiz,ClosedWon,4/21/2025,10/18/2025,210000
 opp-009,Tailspin Toys,Infrastructure Refresh,Elena Rossi,Robert Paulson,Discovery,5/3/2026,2/12/2027,145000
 opp-010,Woodgrove Bank,Customer Portal,Frank Roberts,Mary Shelly,Validation,5/9/2026,11/22/2026,275000
 opp-011,Proseware,Application Integration,Naomi Brooks,Sofia Patel,PreOnboarding,5/16/2026,1/8/2027,160000
-opp-012,Graphic Design Institute,Managed Services,Bill Smith,Grace Wilson,ClosedLost,5/23/2026,9/25/2026,85000
+opp-012,Graphic Design Institute,Managed Services,Bill Smith,Grace Wilson,ClosedLost,5/23/2025,9/25/2025,85000
 opp-013,Lucerne Publishing,Workflow Automation,Marcus Lee,Robert Paulson,Discovery,6/1/2026,2/28/2027,125000
 opp-014,Fabrikam Residences,Network Optimization,Jane Doe,Mary Shelly,Validation,6/7/2026,12/19/2026,230000
 opp-015,Humongous Insurance,Claims Processing,David Kim,Liam Chen,Handover,6/14/2026,1/30/2027,410000

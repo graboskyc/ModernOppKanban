@@ -12,6 +12,24 @@
 	white-space: nowrap;
 }
 
+.close-year-filter {
+	align-items: center;
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.close-year-filter span {
+	color: #647687;
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+
+.close-year-filter select {
+	margin-bottom: 0;
+	min-width: 8rem;
+}
+
 .kanban-board {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -184,6 +202,17 @@
 
 	.closed-stages-toggle {
 		margin-bottom: 0.75rem;
+	}
+
+	.close-year-filter {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 0.25rem;
+		width: 100%;
+	}
+
+	.close-year-filter select {
+		width: 100%;
 	}
 
 	.kanban-board {
