@@ -1,0 +1,91 @@
+@using MongoDB.Driver
+@using OppKanban.Datamodels
+@inject IMongoCollection<OppView> OppCollection
+
+<article data-theme="light">
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <p class="text-danger">@_errorMessage</p>
+    }
+    else if (_isLoading)
+    {
+        <p>Loading win rate...</p>
+    }
+    else if (ClosedCount == 0)
+    {
+        <p>No closed opportunities found.</p>
+    }
+    else
+    {
+        <ApexChart TItem="WinRate" Title="Win rate (Closed Won vs Closed Lost)" Options="_options">
+            <ApexPointSeries TItem="WinRate"
+                             Items="_winRates"
+                             Name="Win Rate"
+                             SeriesType="SeriesType.RadialBar"
+                             XValue="rate => rate.Label"
+                             YValue="rate => rate.Percentage" />
+        </ApexChart>
+
+        <p>@_wonCount won / @_lostCount lost</p>
+    }
+</article>
+
+@code {
+	private readonly List<WinRate> _winRates = new();
+	private bool _isLoading = true;
+	private string _errorMessage = string.Empty;
+	private int _wonCount;
+	private int _lostCount;
+	private int ClosedCount => _wonCount + _lostCount;
+
+	private readonly ApexChartOptions<WinRate> _options = new()
+	{
+		PlotOptions = new PlotOptions
+		{
+			RadialBar = new PlotOptionsRadialBar
+			{
+				StartAngle = -90,
+				EndAngle = 90,
+				Hollow = new Hollow { Size = "60%" },
+				Track = new Track
+				{
+					Background = "#e7e7e7",
+					StrokeWidth = "97%"
+				},
+				DataLabels = new RadialBarDataLabels
+				{
+					Name = new RadialBarDataLabelsName { Show = true },
+					Value = new RadialBarDataLabelsValue { FontSize = "28px", Show = true }
+				}
+			}
+		}
+	};
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var opportunities = await OppCollection
+				.Find(FilterDefinition<OppView>.Empty)
+				.ToListAsync();
+
+			_wonCount = opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedWon);
+			_lostCount = opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedLost);
+
+			if (ClosedCount > 0)
+			{
+				_winRates.Add(new WinRate("Win Rate", Math.Round(_wonCount * 100m / ClosedCount, 1)));
+			}
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to load win rate: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private sealed record WinRate(string Label, decimal Percentage);
+}
