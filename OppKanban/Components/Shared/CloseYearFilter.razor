@@ -1,4 +1,9 @@
 <div class="close-year-filter">
+    @if (_isOpen)
+    {
+        <button class="close-year-backdrop" type="button" aria-label="Close close year filter" @onclick="CloseDropdown"></button>
+    }
+
     <button class="close-year-trigger" type="button" aria-expanded="@_isOpen" aria-haspopup="listbox" @onclick="ToggleOpen">
         <span>@SelectionLabel</span>
         <span class="close-year-caret" aria-hidden="true"></span>
@@ -7,6 +12,11 @@
     @if (_isOpen)
     {
         <div class="close-year-options" role="group" aria-label="Close years">
+            <div class="close-year-actions">
+                <button class="close-year-action" type="button" @onclick="SelectAllAsync">Select all</button>
+                <button class="close-year-action" type="button" @onclick="ClearAllAsync">Clear all</button>
+            </div>
+
             @foreach (var year in Years.OrderByDescending(year => year))
             {
                 <label>
@@ -43,6 +53,11 @@
         _isOpen = !_isOpen;
     }
 
+    private void CloseDropdown()
+    {
+        _isOpen = false;
+    }
+
     private async Task ToggleYear(int year)
     {
         var selectedYears = SelectedYears.ToHashSet(StringComparer.Ordinal);
@@ -54,5 +69,21 @@
         }
 
         await SelectedYearsChanged.InvokeAsync(selectedYears.OrderByDescending(value => value).ToArray());
+    }
+
+    private async Task SelectAllAsync()
+    {
+        var selectedYears = Years
+            .Select(year => year.ToString())
+            .Distinct(StringComparer.Ordinal)
+            .OrderByDescending(value => value)
+            .ToArray();
+
+        await SelectedYearsChanged.InvokeAsync(selectedYears);
+    }
+
+    private async Task ClearAllAsync()
+    {
+        await SelectedYearsChanged.InvokeAsync(Array.Empty<string>());
     }
 }

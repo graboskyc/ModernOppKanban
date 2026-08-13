@@ -4,6 +4,19 @@
 	position: relative;
 }
 
+.close-year-backdrop {
+	background: transparent;
+	border: 0;
+	bottom: 0;
+	cursor: default;
+	left: 0;
+	padding: 0;
+	position: fixed;
+	right: 0;
+	top: 0;
+	z-index: 9;
+}
+
 .close-year-trigger {
 	align-items: center;
 	background: #ffffff;
@@ -61,6 +74,34 @@
 	position: absolute;
 	top: calc(100% + 0.35rem);
 	z-index: 10;
+}
+
+.close-year-actions {
+	display: flex;
+	gap: 0.35rem;
+	margin-bottom: 0.35rem;
+}
+
+.close-year-action {
+	background: #f4f7fa;
+	border: 1px solid #c8d0d6;
+	border-radius: 4px;
+	color: #33434f;
+	cursor: pointer;
+	font-size: 0.75rem;
+	font-weight: 700;
+	padding: 0.22rem 0.45rem;
+}
+
+.close-year-action:hover {
+	background: #fff1dc;
+	border-color: #e48500;
+}
+
+.close-year-action:focus-visible {
+	box-shadow: 0 0 0 3px rgba(228, 133, 0, 0.25);
+	outline: 2px solid #e48500;
+	outline-offset: 1px;
 }
 
 .close-year-options label {
