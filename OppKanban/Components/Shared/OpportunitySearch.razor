@@ -1,24 +1,17 @@
 @inject IMongoCollection<Datamodels.OppBase> OppCollection;
 @using MongoDB.Driver;
 @using MongoDB.Driver.Search;
+@using Microsoft.FluentUI.AspNetCore.Components;
 
-<div class="autocomplete">
+<div class="autocomplete" style="width:@Width">
         <BasicSearchBar SearchTerm="@_oppName" Placeholder="Opportunity Name..." OnSearchCallback="@SearchOpportunityName" />
 
     @if(_oppList.Count > 0) {
         <ul class="options">
             @foreach (var opp in _oppList) {
                 <li class="option" @onclick="@(()=>SelectOpp(opp))">
-                    <table><tbody>
-                        <tr>
-						<td title="Account Name"><FluentIcon Value="@(new Icons.Regular.Size20.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
-						<td>@opp.AccountName</td>
-                        </tr>
-                        <tr>
-                            <td title="Opportunity Name"><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
-                            <td>@opp.OppName</td>
-                        </tr>
-                    </tbody></table>
+                        <strong><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppName</strong><br />
+                        <small><FluentIcon Value="@(new Icons.Regular.Size16.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />@opp.AccountName</small>
                 </li>
             }
         </ul>
@@ -27,6 +20,8 @@
 
 
 @code {
+    [Parameter]
+    public string Width { get; set; } = "100%";
 
     [Parameter]
     public EventCallback<Datamodels.OppBase> OnOpportunitySelected { get; set; }
