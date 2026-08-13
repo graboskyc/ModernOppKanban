@@ -28,12 +28,12 @@ else if (_opportunities.Count == 0)
 else
 {
 	<div class="grid">
-		<Chart_OppStage Opportunities="FilteredOpportunities" />
-		<Chart_OppOwnership Opportunities="FilteredOpportunities" />
+		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
+		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" />
 	</div>
 
 	<div class="grid">
-		<Chart_WinLoss Opportunities="FilteredOpportunities" />
+		<Chart_WinLoss @key="WinLossChartKey" Opportunities="FilteredOpportunities" />
 	</div>
 }
 
@@ -41,8 +41,12 @@ else
 	private readonly List<OppView> _opportunities = new();
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
 	private string[] _selectedCloseYears = Array.Empty<string>();
+	private int _chartsRenderVersion;
 	private bool _isLoading = true;
 	private string _errorMessage = string.Empty;
+	private string StageChartKey => $"stage-{_chartsRenderVersion}";
+	private string OwnershipChartKey => $"ownership-{_chartsRenderVersion}";
+	private string WinLossChartKey => $"winloss-{_chartsRenderVersion}";
 
 	private IEnumerable<int> CloseYears => _opportunities
 		.Select(opportunity => opportunity.OppDetails.CloseDate.Year)
@@ -65,6 +69,7 @@ else
 		if (storedCloseYears is not null)
 		{
 			_selectedCloseYears = storedCloseYears;
+			_chartsRenderVersion++;
 		}
 
 		StateHasChanged();
@@ -98,6 +103,7 @@ else
 	private async Task HandleCloseYearsChangedAsync(string[] selectedYears)
 	{
 		_selectedCloseYears = selectedYears;
+		_chartsRenderVersion++;
 		await PersistCloseYearsAsync();
 	}
 }
