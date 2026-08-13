@@ -2,7 +2,7 @@
 
 ## Background
 
-Basic tracking tool that allows exporting a view from SFDC to CSV, importing it here, then managing custom metadata for SAs to administer and run thier business.
+Basic tracking tool that allows exporting a view from SFDC to CSV, importing it here, then managing custom metadata for SAs to administer and run their business.
 
 SFDC remains the source of truth and you can re-import over top without losing SA information.
 
