@@ -1,17 +1,7 @@
-@using MongoDB.Driver
 @using OppKanban.Datamodels
-@inject IMongoCollection<OppView> OppCollection
 
 <article data-theme="light">
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <p class="text-danger">@_errorMessage</p>
-    }
-    else if (_isLoading)
-    {
-        <p>Loading win rate...</p>
-    }
-    else if (ClosedCount == 0)
+	@if (ClosedCount == 0)
     {
         <p>No closed opportunities found.</p>
     }
@@ -31,9 +21,10 @@
 </article>
 
 @code {
+	[Parameter]
+	public IEnumerable<OppView> Opportunities { get; set; } = Enumerable.Empty<OppView>();
+
 	private readonly List<WinRate> _winRates = new();
-	private bool _isLoading = true;
-	private string _errorMessage = string.Empty;
 	private int _wonCount;
 	private int _lostCount;
 	private int ClosedCount => _wonCount + _lostCount;
@@ -61,29 +52,15 @@
 		}
 	};
 
-	protected override async Task OnInitializedAsync()
+	protected override void OnParametersSet()
 	{
-		try
-		{
-			var opportunities = await OppCollection
-				.Find(FilterDefinition<OppView>.Empty)
-				.ToListAsync();
+		_winRates.Clear();
+		_wonCount = Opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedWon);
+		_lostCount = Opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedLost);
 
-			_wonCount = opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedWon);
-			_lostCount = opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedLost);
-
-			if (ClosedCount > 0)
-			{
-				_winRates.Add(new WinRate("Win Rate", Math.Round(_wonCount * 100m / ClosedCount, 1)));
-			}
-		}
-		catch (Exception ex)
+		if (ClosedCount > 0)
 		{
-			_errorMessage = $"Unable to load win rate: {ex.Message}";
-		}
-		finally
-		{
-			_isLoading = false;
+			_winRates.Add(new WinRate("Win Rate", Math.Round(_wonCount * 100m / ClosedCount, 1)));
 		}
 	}
 

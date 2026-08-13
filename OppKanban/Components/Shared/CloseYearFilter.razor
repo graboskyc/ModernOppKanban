@@ -1,0 +1,58 @@
+<div class="close-year-filter">
+    <button class="close-year-trigger" type="button" aria-expanded="@_isOpen" aria-haspopup="listbox" @onclick="ToggleOpen">
+        <span>@SelectionLabel</span>
+        <span class="close-year-caret" aria-hidden="true"></span>
+    </button>
+
+    @if (_isOpen)
+    {
+        <div class="close-year-options" role="group" aria-label="Close years">
+            @foreach (var year in Years.OrderByDescending(year => year))
+            {
+                <label>
+                    <input type="checkbox"
+                           checked="@IsSelected(year)"
+                           @onchange="() => ToggleYear(year)" />
+                    <span>@year</span>
+                </label>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<int> Years { get; set; } = Enumerable.Empty<int>();
+
+    [Parameter]
+    public string[] SelectedYears { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public EventCallback<string[]> SelectedYearsChanged { get; set; }
+
+    private bool _isOpen;
+
+    private string SelectionLabel => SelectedYears.Length == 0
+        ? "All close years"
+        : $"{SelectedYears.Length} close year{(SelectedYears.Length == 1 ? string.Empty : "s")} selected";
+
+    private bool IsSelected(int year) => SelectedYears.Contains(year.ToString(), StringComparer.Ordinal);
+
+    private void ToggleOpen()
+    {
+        _isOpen = !_isOpen;
+    }
+
+    private async Task ToggleYear(int year)
+    {
+        var selectedYears = SelectedYears.ToHashSet(StringComparer.Ordinal);
+        var yearValue = year.ToString();
+
+        if (!selectedYears.Add(yearValue))
+        {
+            selectedYears.Remove(yearValue);
+        }
+
+        await SelectedYearsChanged.InvokeAsync(selectedYears.OrderByDescending(value => value).ToArray());
+    }
+}

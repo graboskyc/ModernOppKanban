@@ -8,7 +8,18 @@
     @if(_oppList.Count > 0) {
         <ul class="options">
             @foreach (var opp in _oppList) {
-                <li class="option" @onclick="@(()=>SelectOpp(opp))">@opp.OppName</li>
+                <li class="option" @onclick="@(()=>SelectOpp(opp))">
+                    <table><tbody>
+                        <tr>
+						<td title="Account Name"><FluentIcon Value="@(new Icons.Regular.Size20.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td>@opp.AccountName</td>
+                        </tr>
+                        <tr>
+                            <td title="Opportunity Name"><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+                            <td>@opp.OppName</td>
+                        </tr>
+                    </tbody></table>
+                </li>
             }
         </ul>
     } 

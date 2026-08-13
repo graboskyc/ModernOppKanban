@@ -21,15 +21,7 @@
 
 	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" />
 
-	<label class="close-year-filter">
-		<span>Close years</span>
-		<select multiple size="4" @bind="_selectedCloseYears" @bind:after="PersistCloseYearsAsync" aria-label="Filter opportunities by close year">
-			@foreach (var year in CloseYears)
-			{
-				<option value="@year">@year</option>
-			}
-		</select>
-	</label>
+	<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
@@ -309,6 +301,12 @@ else
 	private async Task PersistCloseYearsAsync()
 	{
 		await JS.InvokeVoidAsync("oppFilterStorage.setCloseYears", CloseYearsStorageKey, _selectedCloseYears);
+	}
+
+	private async Task HandleCloseYearsChangedAsync(string[] selectedYears)
+	{
+		_selectedCloseYears = selectedYears;
+		await PersistCloseYearsAsync();
 	}
 
 	private async Task ToggleClosedStages()

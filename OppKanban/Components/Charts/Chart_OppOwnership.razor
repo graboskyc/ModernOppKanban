@@ -1,17 +1,7 @@
-@using MongoDB.Driver
 @using OppKanban.Datamodels
-@inject IMongoCollection<OppView> OppCollection
 
 <article data-theme="light">
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <p class="text-danger">@_errorMessage</p>
-    }
-    else if (_isLoading)
-    {
-        <p>Loading analytics...</p>
-    }
-    else if (_ownerCounts.Count == 0)
+    @if (_ownerCounts.Count == 0)
     {
         <p>No opportunities found.</p>
     }
@@ -32,9 +22,10 @@
 </article>
 
 @code {
+    [Parameter]
+    public IEnumerable<OppView> Opportunities { get; set; } = Enumerable.Empty<OppView>();
+
     private readonly List<OwnerCount> _ownerCounts = new();
-    private bool _isLoading = true;
-    private string _errorMessage = string.Empty;
 
     private readonly ApexChartOptions<OwnerCount> _options = new()
     {
@@ -42,15 +33,10 @@
         Legend = new Legend { Show = true }
     };
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnParametersSet()
     {
-        try
-        {
-            var opportunities = await OppCollection
-                .Find(FilterDefinition<OppView>.Empty)
-                .ToListAsync();
-
-            _ownerCounts.AddRange(opportunities
+        _ownerCounts.Clear();
+        _ownerCounts.AddRange(Opportunities
                 .Where(opportunity => opportunity.OppDetails is not null)
                 .GroupBy(opportunity => new
                 {
@@ -60,15 +46,6 @@
                 .OrderBy(group => group.Key.Sa)
                 .ThenBy(group => group.Key.Owner)
                 .Select(group => new OwnerCount(group.Key.Sa, group.Key.Owner, group.Count())));
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Unable to load analytics: {ex.Message}";
-        }
-        finally
-        {
-            _isLoading = false;
-        }
     }
 
     private static string DisplayName(string? value, string fallback) =>

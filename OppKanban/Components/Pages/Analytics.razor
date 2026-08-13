@@ -5,16 +5,99 @@
 @using OppKanban.Components.Shared
 @using MongoDB.Driver
 @inject IMongoCollection<OppView> OppCollection
+@inject IJSRuntime JS
 
 <PageTitle>Analytics</PageTitle>
 
 <h1>Analytics</h1>
 
-<div class="grid">
-	<Chart_OppStage />
-	<Chart_OppOwnership />
-</div>
+<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
 
-<div class="grid">
-	<Chart_WinLoss />
-</div>
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+	<p class="text-danger">@_errorMessage</p>
+}
+else if (_isLoading)
+{
+	<p>Loading analytics...</p>
+}
+else if (_opportunities.Count == 0)
+{
+	<p>No opportunities found.</p>
+}
+else
+{
+	<div class="grid">
+		<Chart_OppStage Opportunities="FilteredOpportunities" />
+		<Chart_OppOwnership Opportunities="FilteredOpportunities" />
+	</div>
+
+	<div class="grid">
+		<Chart_WinLoss Opportunities="FilteredOpportunities" />
+	</div>
+}
+
+@code {
+	private readonly List<OppView> _opportunities = new();
+	private const string CloseYearsStorageKey = "opp-kanban:close-years";
+	private string[] _selectedCloseYears = Array.Empty<string>();
+	private bool _isLoading = true;
+	private string _errorMessage = string.Empty;
+
+	private IEnumerable<int> CloseYears => _opportunities
+		.Select(opportunity => opportunity.OppDetails.CloseDate.Year)
+		.Distinct()
+		.OrderByDescending(year => year);
+
+	private IEnumerable<OppView> FilteredOpportunities => _selectedCloseYears.Length == 0
+		? _opportunities
+		: _opportunities.Where(opportunity => _selectedCloseYears.Contains(
+			opportunity.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal));
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender)
+		{
+			return;
+		}
+
+		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
+		if (storedCloseYears is not null)
+		{
+			_selectedCloseYears = storedCloseYears;
+		}
+
+		StateHasChanged();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var opportunities = await OppCollection
+				.Find(FilterDefinition<OppView>.Empty)
+				.ToListAsync();
+
+			_opportunities.AddRange(opportunities);
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to load analytics: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private async Task PersistCloseYearsAsync()
+	{
+		await JS.InvokeVoidAsync("oppFilterStorage.setCloseYears", CloseYearsStorageKey, _selectedCloseYears);
+	}
+
+	private async Task HandleCloseYearsChangedAsync(string[] selectedYears)
+	{
+		_selectedCloseYears = selectedYears;
+		await PersistCloseYearsAsync();
+	}
+}
