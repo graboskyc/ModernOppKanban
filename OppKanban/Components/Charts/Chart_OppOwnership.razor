@@ -1,6 +1,5 @@
 @using MongoDB.Driver
 @using OppKanban.Datamodels
-@inject IJSRuntime JS
 @inject IMongoCollection<OppView> OppCollection
 
 <article data-theme="light">
@@ -12,22 +11,36 @@
     {
         <p>Loading analytics...</p>
     }
-    else if (_sunburstData.Count == 0)
+    else if (_ownerCounts.Count == 0)
     {
         <p>No opportunities found.</p>
     }
     else
     {
-        <div @ref="_chartElement" style="min-height: 420px;"></div>
+        <ApexChart TItem="OwnerCount" Title="Opportunities by SA and account owner" Options="_options">
+            @foreach (var saGroup in _ownerCounts.GroupBy(owner => owner.Sa).OrderBy(group => group.Key))
+            {
+                <ApexPointSeries TItem="OwnerCount"
+                                 Items="saGroup.ToList()"
+                                 Name="@saGroup.Key"
+                                 SeriesType="SeriesType.Treemap"
+                                 XValue="owner => owner.Owner"
+                                 YValue="owner => owner.Count" />
+            }
+        </ApexChart>
     }
 </article>
 
 @code {
-    private readonly List<SunburstNode> _sunburstData = new();
-    private ElementReference _chartElement;
+    private readonly List<OwnerCount> _ownerCounts = new();
     private bool _isLoading = true;
-    private bool _chartRendered;
     private string _errorMessage = string.Empty;
+
+    private readonly ApexChartOptions<OwnerCount> _options = new()
+    {
+        Chart = new Chart { Height = 420 },
+        Legend = new Legend { Show = true }
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -37,18 +50,16 @@
                 .Find(FilterDefinition<OppView>.Empty)
                 .ToListAsync();
 
-            _sunburstData.AddRange(opportunities
+            _ownerCounts.AddRange(opportunities
                 .Where(opportunity => opportunity.OppDetails is not null)
-                .GroupBy(opportunity => DisplayName(opportunity.OppDetails!.PrimarySA, "Unassigned SA"))
-                .OrderBy(group => group.Key)
-                .Select(saGroup => new SunburstNode(
-                    saGroup.Key,
-                    saGroup.Count(),
-                    saGroup
-                        .GroupBy(opportunity => DisplayName(opportunity.OppDetails!.OpportunityOwner, "Unassigned owner"))
-                        .OrderBy(ownerGroup => ownerGroup.Key)
-                        .Select(ownerGroup => new SunburstNode(ownerGroup.Key, ownerGroup.Count()))
-                        .ToList())));
+                .GroupBy(opportunity => new
+                {
+                    Sa = DisplayName(opportunity.OppDetails!.PrimarySA, "Unassigned SA"),
+                    Owner = DisplayName(opportunity.OppDetails!.OpportunityOwner, "Unassigned owner")
+                })
+                .OrderBy(group => group.Key.Sa)
+                .ThenBy(group => group.Key.Owner)
+                .Select(group => new OwnerCount(group.Key.Sa, group.Key.Owner, group.Count())));
         }
         catch (Exception ex)
         {
@@ -60,17 +71,8 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!_chartRendered && !_isLoading && _sunburstData.Count > 0)
-        {
-            _chartRendered = true;
-            await JS.InvokeVoidAsync("oppKanbanSunburst.render", _chartElement, _sunburstData);
-        }
-    }
-
     private static string DisplayName(string? value, string fallback) =>
         string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
-    private sealed record SunburstNode(string X, int Y, List<SunburstNode>? Children = null);
+    private sealed record OwnerCount(string Sa, string Owner, int Count);
 }
