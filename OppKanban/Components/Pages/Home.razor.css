@@ -74,7 +74,16 @@
 	border-left: 4px solid var(--pico-primary);
 	border-radius: 6px;
 	box-shadow: 0 2px 5px rgba(35, 48, 59, 0.08);
+	cursor: grab;
 	padding: 0.85rem;
+}
+
+.opportunity-card:active {
+	cursor: grabbing;
+}
+
+.kanban-lane:has(.opportunity-card[draggable="true"]:active) {
+	border-color: #e48500;
 }
 
 .opportunity-card-heading {

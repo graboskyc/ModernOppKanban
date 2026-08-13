@@ -6,6 +6,7 @@
 @using OppKanban.Components.Shared
 @using MongoDB.Driver
 @inject IMongoCollection<OppView> OppCollection
+@inject IMongoCollection<OppBase> OppsCollection
 @inject IJSRuntime JS
 @using Microsoft.FluentUI.AspNetCore.Components;
 
@@ -36,7 +37,7 @@ else
 		@foreach (var stage in VisibleStages)
 		{
 			var stageOpps = _opps.Where(opp => opp.GetStageEnum() == stage).ToList();
-			<div class="kanban-lane">
+			<div class="kanban-lane" @ondragover="HandleDragOver" @ondragover:preventDefault="true" @ondrop:preventDefault="true" @ondrop="() => MoveOpportunityAsync(stage)">
 				<header class="kanban-lane-header">
 					<div>
 						<h2>@StageHelper.GetStageName(stage)</h2>
@@ -48,7 +49,7 @@ else
 				<div class="kanban-cards">
 					@foreach (var opp in stageOpps)
 					{
-						<article class="opportunity-card">
+						<article class="opportunity-card" draggable="true" @ondragstart="() => StartDragging(opp)" @ondragend="ClearDragging">
 							<div class="opportunity-card-heading">
 								<div>
 									<h3>@opp.OppDetails.OppName</h3>
@@ -117,6 +118,8 @@ else
 	private string _errorMessage = string.Empty;
 	private string _statusMessage = string.Empty;
 	private bool _showToast;
+	private OppView? _draggedOpp;
+	private OpportunityStage? _draggedFromStage;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -184,6 +187,49 @@ else
 	{
 		_statusMessage = message;
 		_showToast = true;
+	}
+
+	private void StartDragging(OppView opp)
+	{
+		_draggedOpp = opp;
+		_draggedFromStage = opp.GetStageEnum();
+	}
+
+	private void ClearDragging()
+	{
+		_draggedOpp = null;
+		_draggedFromStage = null;
+	}
+
+	private void HandleDragOver(DragEventArgs _)
+	{
+	}
+
+	private async Task MoveOpportunityAsync(OpportunityStage targetStage)
+	{
+		if (_draggedOpp is null || _draggedFromStage is null || _draggedFromStage == targetStage)
+		{
+			ClearDragging();
+			return;
+		}
+
+		var opportunity = _draggedOpp;
+		var previousStatus = opportunity.OppDetails.Status;
+		opportunity.OppDetails.Status = targetStage.ToString();
+		ClearDragging();
+
+		try
+		{
+			var filter = Builders<OppBase>.Filter.Eq(x => x.Id, opportunity.Id);
+			var update = Builders<OppBase>.Update.Set(x => x.Status, opportunity.OppDetails.Status);
+			await OppsCollection.UpdateOneAsync(filter, update);
+			ShowToast($"Moved to {StageHelper.GetStageName(targetStage)}.");
+		}
+		catch (Exception ex)
+		{
+			opportunity.OppDetails.Status = previousStatus;
+			ShowToast($"Unable to move opportunity: {ex.Message}");
+		}
 	}
 
 	private IReadOnlyList<OpportunityStage> VisibleStages => _showClosedStages
