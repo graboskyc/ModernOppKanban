@@ -1,6 +1,42 @@
 version: '3.8'
 
 services:
+  setup-generator:
+    image: alpine:latest
+    container_name: oppkanban-setup-generator
+    environment:
+      MONGOT_PASSWORD: ${MONGOT_PASSWORD:-mongotPassword}
+    command: >-
+      sh -c "
+        apk add --no-cache openssl;
+        if [ ! -f /auth/keyfile ]; then
+          openssl rand -base64 756 > /auth/keyfile;
+          chmod 400 /auth/keyfile;
+          chown 1000:1000 /auth/keyfile;
+        fi;
+        if [ ! -f /auth/passwordFile ]; then
+          printf '%s' \"$$MONGOT_PASSWORD\" > /auth/passwordFile;
+          chmod 600 /auth/passwordFile;
+          chown 1000:1000 /auth/passwordFile;
+        fi;
+      "
+    volumes:
+      - auth-files:/auth
+    restart: "no"
+  
+  mongodb-permissions:
+    image: alpine:latest
+    container_name: oppkanban-mongodb-permissions
+    user: "0:0"
+    command: ["sh", "-c", "chown -R 1000:1000 /data/db /data/configdb"]
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-configdb:/data/configdb
+    depends_on:
+      setup-generator:
+        condition: service_completed_successfully
+    restart: "no"
+
   oppkanban:
     build:
       context: .
@@ -14,28 +50,101 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - MongoDb__ConnectionString=mongodb://mongodb:27017/OppKanban
     depends_on:
-      - mongodb
+      setup-generator:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      mongot:
+        condition: service_healthy
     networks:
       - oppkanban-network
     restart: unless-stopped
 
   mongodb:
-    image: mongo:latest
+    image: mongodb/mongodb-community-server:8.3.4-ubi9
     container_name: oppkanban-mongodb
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
-      MONGO_INITDB_DATABASE: OppKanban
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      MONGOT_PASSWORD: ${MONGOT_PASSWORD:-mongotPassword}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+    command: >-
+      mongod
+      --config /etc/mongod.conf
+      --replSetMember=mongodb:27017
     volumes:
       - mongodb-data:/data/db
+      - mongodb-configdb:/data/configdb
+      - ./mongod.conf:/etc/mongod.conf:ro
+      - auth-files:/auth
+    depends_on:
+      mongodb-permissions:
+        condition: service_completed_successfully
     networks:
       - oppkanban-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--username", "admin", "--password", "${ADMIN_PASSWORD:-admin}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+  
+  mongodb-init:
+    image: mongodb/mongodb-community-server:8.3.4-ubi9
+    container_name: oppkanban-mongodb-init
+    entrypoint: ["/bin/bash"]
+    command: ["/init-mongo.sh"]
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      MONGOT_PASSWORD: ${MONGOT_PASSWORD:-mongotPassword}
+    volumes:
+      - ./init-mongo.sh:/init-mongo.sh:ro
+    networks:
+      - oppkanban-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+
+  mongot:
+    image: mongodb/mongodb-community-search:1.70.1
+    container_name: oppkanban-mongot
+    ports:
+      - "27028:27028"
+      - "8080:8080"
+      - "9946:9946"
+    volumes:
+      - mongot-data:/data/mongot
+      - ./mongot.conf:/mongot-community/config.default.yml:ro
+      - auth-files:/auth
+    networks:
+      - oppkanban-network
+    depends_on:
+      setup-generator:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://mongot:9946/metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
 volumes:
   mongodb-data:
+    driver: local
+  mongodb-configdb:
+    driver: local
+  mongot-data:
+    driver: local
+  auth-files:
     driver: local
 
 networks:
