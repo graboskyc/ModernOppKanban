@@ -1,0 +1,64 @@
+@inject IMongoCollection<Datamodels.OppBase> OppCollection;
+@using MongoDB.Driver;
+@using MongoDB.Driver.Search;
+
+<div class="autocomplete">
+        <BasicSearchBar SearchTerm="@_oppName" Placeholder="Opportunity Name..." OnSearchCallback="@SearchOpportunityName" />
+
+    @if(_oppList.Count > 0) {
+        <ul class="options">
+            @foreach (var opp in _oppList) {
+                <li class="option" @onclick="@(()=>SelectOpp(opp))">@opp.OppName</li>
+            }
+        </ul>
+    } 
+</div>
+
+
+@code {
+
+    [Parameter]
+    public EventCallback<Datamodels.OppBase> OnOpportunitySelected { get; set; }
+
+    [Parameter]
+    public EventCallback OnClearAccount { get; set; }
+
+    private string _oppName = "";
+    private List<Datamodels.OppBase> _oppList = new List<Datamodels.OppBase>();
+    private CancellationTokenSource _oppSearchCts;
+
+    private async Task ClearAccount() {
+        _oppName = "";
+        _oppList.Clear();
+        await OnClearAccount.InvokeAsync();
+    }
+
+    private async void SearchOpportunityName(string term) {
+        _oppName = term;
+        
+        _oppSearchCts?.Cancel();
+        _oppSearchCts = new CancellationTokenSource();
+        var cancellationToken = _oppSearchCts.Token;
+        
+        try {
+            var result = await OppCollection.Aggregate()
+                .Search(Builders<Datamodels.OppBase>.Search.Compound()
+                    .Should(Builders<Datamodels.OppBase>.Search.Text(o => o.AccountName, _oppName))
+                    .Should(Builders<Datamodels.OppBase>.Search.Text(o => o.OppName, _oppName))
+                , indexName: "default")
+                .Limit(10)
+                .ToListAsync(cancellationToken);
+            
+            if (cancellationToken.IsCancellationRequested) return;
+            _oppList = result;
+            await InvokeAsync(StateHasChanged);
+        } catch (OperationCanceledException) {
+            // Search was cancelled, ignore
+        }
+    }
+
+    private async Task SelectOpp(Datamodels.OppBase opp) {
+        _oppList.Clear();
+        await OnOpportunitySelected.InvokeAsync(opp);
+    }
+}

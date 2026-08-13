@@ -1,0 +1,69 @@
+@using OppKanban.Datamodels
+@using Microsoft.FluentUI.AspNetCore.Components;
+
+@if (Opportunity is not null)
+{
+	<dialog open @oncancel="CloseModalAsync">
+		<article class="opportunity-details-modal">
+			<header>
+				<button type="button" aria-label="Close" rel="prev" @onclick="CloseModalAsync"></button>
+				<p>
+					<strong>@Opportunity.OppDetails.OppName</strong><br />
+					<small class="account-name">@Opportunity.OppDetails.AccountName</small>
+				</p>
+			</header>
+
+			<div class="grid" style="margin-bottom:.9rem">
+				<div class="opportunity-people">
+					<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @Opportunity.OppDetails.OpportunityOwner</span>
+					<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @Opportunity.OppDetails.PrimarySA</span>
+				</div>
+				<div>
+					<span class="opportunity-err">@Opportunity.OppDetails.ErrRounded</span>
+				</div>
+			</div>
+
+			<StageDiagram CurrentStage="@Opportunity.GetStageEnum()" Width="100%" Height="90px" />
+
+			<footer class="opportunity-card-footer">
+				<span>
+					<FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+					@Opportunity.OppDetails.CloseDate.ToString("yyyy-MM-dd")
+				</span>
+				<span>@((DateTime.Now - Opportunity.OppDetails.CreatedDate).Days)d old</span>
+			</footer>
+
+			@if (Opportunity.OppMetadata is not null)
+			{
+				<hr />
+				<p><strong>SA likelihood</strong> @Opportunity.OppMetadata.SaLikelihood.ToString("0")%</p>
+
+				@if (Opportunity.OppMetadata.Assets.Count > 0)
+				{
+					<p><strong>Assets</strong></p>
+					<table><tbody>
+						@foreach (var asset in Opportunity.OppMetadata.Assets)
+						{
+							<tr>
+								<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
+							</tr>
+						}
+					</tbody></table>
+				}
+			}
+		</article>
+	</dialog>
+}
+
+@code {
+	[Parameter, EditorRequired]
+	public OppView? Opportunity { get; set; }
+
+	[Parameter]
+	public EventCallback OnClose { get; set; }
+
+	private async Task CloseModalAsync()
+	{
+		await OnClose.InvokeAsync();
+	}
+}

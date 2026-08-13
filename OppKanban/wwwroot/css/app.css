@@ -44,3 +44,39 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.autocomplete {
+    position: relative;
+  }
+
+  .autocomplete .options {
+    width: 100%;
+    padding: 0;
+    z-index: 10;
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px 10px rgba(255, 255, 255, 0.1)
+  }
+
+  .autocomplete .option {
+    display: block;
+    padding: 0.25rem;
+  }
+  .autocomplete .option .option-text {
+    padding: 0.25rem 0.5rem;
+  }
+  .autocomplete .option:hover {
+    background: var(--pico-primary);
+    color: #fff;
+    border-radius: 0.5rem;
+    z-index: 0;
+  }
+  .autocomplete .option.disabled {
+    background-color: lightgrey;
+    cursor: not-allowed;
+    border: none;
+  }
+  .autocomplete .option.disabled:hover {
+    background: lightgrey;
+    color: var(--bs-body);
+  }

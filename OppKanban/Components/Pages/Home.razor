@@ -14,6 +14,7 @@
 
 <div class="kanban-page-header">
 	<h1>Opportunities</h1>
+	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" />
 	<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
 		@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
 	</button>
@@ -103,6 +104,11 @@ else
 	<OppMetadataModal Opportunity="_selectedOpp" OnClose="CloseMetadataModal" OnToast="ShowToast" OnSaved="HandleMetadataSaved" />
 }
 
+@if (_isSearchResultModalOpen)
+{
+	<OppDetailsModal Opportunity="_selectedSearchOpp" OnClose="CloseSearchResultModal" />
+}
+
 <Toast Message="@_statusMessage" Show="_showToast">
 	<FluentIcon Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#647687" Value="@(new Icons.Regular.Size20.CheckboxPerson())" />
 </Toast>
@@ -120,6 +126,8 @@ else
 	private bool _showToast;
 	private OppView? _draggedOpp;
 	private OpportunityStage? _draggedFromStage;
+	private OppView? _selectedSearchOpp;
+	private bool _isSearchResultModalOpen;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -167,6 +175,38 @@ else
 	{
 		_isMetadataModalOpen = false;
 		_selectedOpp = null;
+	}
+
+	private async Task HandleOpportunitySelectedAsync(OppBase opp)
+	{
+		var view = _opps.FirstOrDefault(x => x.OppDetails.Id == opp.Id);
+		if (view is null)
+		{
+			try
+			{
+				view = await OppCollection.Find(x => x.OppDetails.Id == opp.Id).FirstOrDefaultAsync();
+			}
+			catch (Exception ex)
+			{
+				ShowToast($"Unable to load opportunity: {ex.Message}");
+				return;
+			}
+		}
+
+		if (view is null)
+		{
+			ShowToast("Opportunity not found.");
+			return;
+		}
+
+		_selectedSearchOpp = view;
+		_isSearchResultModalOpen = true;
+	}
+
+	private void CloseSearchResultModal()
+	{
+		_isSearchResultModalOpen = false;
+		_selectedSearchOpp = null;
 	}
 
 	private void HandleMetadataSaved(OppMetadata metadata)

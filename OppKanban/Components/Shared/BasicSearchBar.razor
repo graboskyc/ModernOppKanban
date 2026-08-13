@@ -1,0 +1,75 @@
+@implements IDisposable
+
+<input 
+    type="search" 
+    name="search"
+    autocomplete="off" 
+    placeholder="@Placeholder" 
+    aria-label="Search" 
+    @bind="SearchTerm" 
+    @bind:event="oninput" 
+    @bind:after="OnSearchTextChanged"
+    @onfocus="HandleFocus"
+    />
+
+@code {    
+    private System.Timers.Timer _debounceTimer;
+    private CancellationTokenSource _cts;
+
+    [Parameter]
+    public string SearchTerm { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; }
+
+    [Parameter]
+    public int Debounce { get; set; } = 300;
+
+    [Parameter]
+    public int MinimumLength { get; set; } = 3;
+
+    [Parameter]
+    public EventCallback<string> OnSearchCallback { get; set; }
+
+    [Parameter]
+    public EventCallback OnFocusCallback { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _debounceTimer = new System.Timers.Timer();
+        _debounceTimer.Interval = Debounce;
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Elapsed += async (s, e) => await PerformSearch();
+    }
+
+    private async Task HandleFocus() {
+        await OnFocusCallback.InvokeAsync();
+    }
+
+    private void OnSearchTextChanged()
+    {
+        _debounceTimer.Stop();
+        if (!string.IsNullOrEmpty(SearchTerm) && SearchTerm.Length >= MinimumLength)
+        {
+            _debounceTimer.Start();
+        }
+    }
+
+    private async Task PerformSearch() {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        
+        await InvokeAsync(async () => 
+        {
+            await OnSearchCallback.InvokeAsync(SearchTerm);
+        });
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Stop();
+        _debounceTimer?.Dispose();
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}
