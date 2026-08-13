@@ -179,5 +179,6 @@
 
 	.kanban-board {
 		grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+		min-height: 80vh;
 	}
 }
