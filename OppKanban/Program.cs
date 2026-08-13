@@ -75,6 +75,17 @@ using (var scope = app.Services.CreateScope())
     {
         await db.CreateViewAsync(viewName, "opps", PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
     }
+
+    // Ensure the Atlas Search index used by opportunity search exists on startup
+    const string searchIndexName = "default";
+    var oppsCollection = db.GetCollection<BsonDocument>("opps");
+    var existingIndexes = await (await oppsCollection.SearchIndexes.ListAsync()).ToListAsync();
+
+    if (!existingIndexes.Any(index => index["name"].AsString == searchIndexName))
+    {
+        var searchIndexDefinition = new BsonDocument("mappings", new BsonDocument("dynamic", true));
+        await oppsCollection.SearchIndexes.CreateOneAsync(new CreateSearchIndexModel(searchIndexName, searchIndexDefinition));
+    }
 }
 
 // Configure the HTTP request pipeline.
