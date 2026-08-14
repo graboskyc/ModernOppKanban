@@ -1,0 +1,30 @@
+{
+  "type": "view",
+  "name": "v__oppsAndMetadata",
+  "viewOn": "opps",
+  "pipeline": [
+    {
+      "$project": {
+        "_id": 1,
+        "oppDetails": "$$ROOT"
+      }
+    },
+    {
+      "$lookup": {
+        "from": "metadata",
+        "localField": "_id",
+        "foreignField": "oppId",
+        "as": "oppMetadata"
+      }
+    },
+    {
+      "$project": {
+        "_id": 1,
+        "oppDetails": 1,
+        "oppMetadata": {
+          "$first": "$oppMetadata"
+        }
+      }
+    }
+  ]
+}

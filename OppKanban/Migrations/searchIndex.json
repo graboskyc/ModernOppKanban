@@ -1,0 +1,10 @@
+{
+  "type": "searchIndex",
+  "name": "default",
+  "collection": "opps",
+  "definition": {
+    "mappings": {
+      "dynamic": true
+    }
+  }
+}

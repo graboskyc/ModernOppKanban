@@ -1,8 +1,8 @@
 using OppKanban.Components;
 using ApexCharts;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using OppKanban.Datamodels;
+using OppKanban.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,62 +30,14 @@ ConfigureMDBServices(builder.Services);
 
 var app = builder.Build();
 
-// Ensure the view exists on startup
+// Apply the view / search index definitions declared in the Migrations folder
 using (var scope = app.Services.CreateScope())
 {
     var mongoClient = scope.ServiceProvider.GetRequiredService<IMongoClient>();
     var db = mongoClient.GetDatabase("OppKanban");
-    const string viewName = "v__oppsAndMetadata";
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MongoMigrator");
 
-    var collections = await db.ListCollectionNamesAsync();
-    var allNames = await collections.ToListAsync();
-
-    var pipeline = new[]
-    {
-        new BsonDocument("$project", new BsonDocument
-        {
-            { "_id", 1 },
-            { "oppDetails", "$$ROOT" }
-        }),
-        new BsonDocument("$lookup", new BsonDocument
-        {
-            { "from", "metadata" },
-            { "localField", "_id" },
-            { "foreignField", "oppId" },
-            { "as", "oppMetadata" }
-        }),
-        new BsonDocument("$project", new BsonDocument
-        {
-            { "_id", 1 },
-            { "oppDetails", 1 },
-            { "oppMetadata", new BsonDocument("$first", "$oppMetadata") }
-        })
-    };
-
-    if (allNames.Contains(viewName))
-    {
-        await db.RunCommandAsync<BsonDocument>(new BsonDocument
-        {
-            { "collMod", viewName },
-            { "viewOn", "opps" },
-            { "pipeline", new BsonArray(pipeline) }
-        });
-    }
-    else
-    {
-        await db.CreateViewAsync(viewName, "opps", PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
-    }
-
-    // Ensure the Atlas Search index used by opportunity search exists on startup
-    const string searchIndexName = "default";
-    var oppsCollection = db.GetCollection<BsonDocument>("opps");
-    var existingIndexes = await (await oppsCollection.SearchIndexes.ListAsync()).ToListAsync();
-
-    if (!existingIndexes.Any(index => index["name"].AsString == searchIndexName))
-    {
-        var searchIndexDefinition = new BsonDocument("mappings", new BsonDocument("dynamic", true));
-        await oppsCollection.SearchIndexes.CreateOneAsync(new CreateSearchIndexModel(searchIndexName, searchIndexDefinition));
-    }
+    await MongoMigrator.ApplyAsync(db, Path.Combine(AppContext.BaseDirectory, "Migrations"), logger);
 }
 
 // Configure the HTTP request pipeline.
