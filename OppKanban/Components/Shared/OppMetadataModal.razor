@@ -2,6 +2,7 @@
 @using MongoDB.Driver
 @inject IMongoCollection<OppMetadata> MetadataCollection;
 @using Microsoft.FluentUI.AspNetCore.Components;
+@using HeyRed.MarkdownSharp;
 
 @if (Opportunity is not null)
 {
@@ -23,33 +24,83 @@
 			else
 			{
 
-				<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
-				<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
+				<article>
+					<h4>Basics</h4>
+					<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
+					<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
 
-				<label for="metadata-assets">Assets</label>
-				<div role="group">
-					<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
-					<input type="url" placeholder="Asset link" @bind="_newAssetLink" @bind:event="oninput" />
-					<button type="button" @onclick="AddAsset" disabled="@(!CanAddAsset)">
-						<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
-					</button>
-				</div>
+					<label for="metadata-assets">Assets</label>
+					<div role="group">
+						<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
+						<input type="url" placeholder="Asset link" @bind="_newAssetLink" @bind:event="oninput" />
+						<button type="button" @onclick="AddAsset" disabled="@(!CanAddAsset)">
+							<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+						</button>
+					</div>
 
-				@if (_metadataDraft.Assets.Count != 0)	{
-					<table><tbody>
-						@foreach (var asset in _metadataDraft.Assets)
-						{
+					@if (_metadataDraft.Assets.Count != 0)	{
+						<table><tbody>
+							@foreach (var asset in _metadataDraft.Assets)
+							{
+								<tr>
+									<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
+									<td width="15%">
+										<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
+											<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+										</button>
+									</td>
+								</tr>
+							}
+						</tbody></table>
+					}
+				</article>
+
+				<article>
+					<h4>MEDDPICC</h4>
+					<table class="table" style="text-align: center;">
+						<thead class="thead-dark">
 							<tr>
-								<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
-								<td width="15%">
-									<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
-										<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
-									</button>
-								</td>
+								<th>Metrics</th>
+								<th>Economic<br>Buyer</th>
+								<th>Decision<br>Criteria</th>
+								<th>Decision<br>Process</th>
+								<th>Paper<br>Process</th>
+								<th>Identify<br>Pain</th>
+								<th>Champion</th>
+								<th>Competition</th>
 							</tr>
-						}
-					</tbody></table>
-				}
+						</thead>
+						<tbody>
+							<tr>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_M, v => _metadataDraft.MEDDPICC.MEDDPICC_M = v, "Metrics")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_E, v => _metadataDraft.MEDDPICC.MEDDPICC_E = v, "Economic Buyer")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dc, v => _metadataDraft.MEDDPICC.MEDDPICC_Dc = v, "Decision Criteria")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dp, v => _metadataDraft.MEDDPICC.MEDDPICC_Dp = v, "Decision Process")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_P, v => _metadataDraft.MEDDPICC.MEDDPICC_P = v, "Paper Process")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_I, v => _metadataDraft.MEDDPICC.MEDDPICC_I = v, "Identify Pain")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Ch, v => _metadataDraft.MEDDPICC.MEDDPICC_Ch = v, "Champion")</td>
+								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Co, v => _metadataDraft.MEDDPICC.MEDDPICC_Co = v, "Competition")</td>
+							</tr>
+						</tbody>
+					</table>
+				</article>
+
+				<article>
+					<header style="display:flex;justify-content:space-between;align-items:center;">
+						<h4 style="margin:0;">Notes</h4>
+						<button type="button" class="secondary" @onclick="ToggleNotesPreview">
+							@(_isPreviewingNotes ? "Edit" : "Preview")
+						</button>
+					</header>
+					@if (_isPreviewingNotes)
+					{
+						<div class="notes-preview">@_notesPreviewMarkup</div>
+					}
+					else
+					{
+						<textarea rows="5" @bind="_metadataDraft.MEDDPICC.MEDDPICC_Notes" @bind:event="oninput"></textarea>
+					}
+				</article>
 
 				<footer>
 					<button type="button" class="secondary" @onclick="CloseModalAsync">Cancel</button>
@@ -66,6 +117,26 @@
 }
 
 @code {
+	private RenderFragment MeddpiccToggle(Func<bool> getter, Action<bool> setter, string label) => __builder =>
+	{
+		var isChecked = getter();
+		<button type="button"
+				class="@(isChecked ? "" : "secondary")"
+				aria-pressed="@isChecked"
+				aria-label="@label"
+				title="@label"
+				@onclick="() => setter(!getter())">
+			@if (isChecked)
+			{
+				<FluentIcon Value="@(new Icons.Regular.Size20.CheckboxChecked())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+			}
+			else
+			{
+				<FluentIcon Value="@(new Icons.Regular.Size20.CheckboxUnchecked())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+			}
+		</button>
+	};
+
 	[Parameter, EditorRequired]
 	public OppBase? Opportunity { get; set; }
 
@@ -83,6 +154,9 @@
 	private string _newAssetLink = string.Empty;
 	private bool _isLoading = true;
 	private bool _isSaving;
+	private bool _isPreviewingNotes;
+	private MarkupString _notesPreviewMarkup;
+	private static readonly Markdown _markdown = new();
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -96,6 +170,7 @@
 		_metadataDraft = new OppMetadata { OppId = Opportunity.Id };
 		_newAssetName = string.Empty;
 		_newAssetLink = string.Empty;
+		_isPreviewingNotes = false;
 
 		try
 		{
@@ -110,7 +185,8 @@
 					Id = metadata.Id,
 					OppId = metadata.OppId,
 					SaLikelihood = metadata.SaLikelihood,
-					Assets = metadata.Assets.ToList()
+					Assets = metadata.Assets.ToList(),
+					MEDDPICC = metadata.MEDDPICC ?? new MEDDPICC()
 				};
 			}
 		}
@@ -150,7 +226,8 @@
 			var update = Builders<OppMetadata>.Update
 				.Set(x => x.OppId, Opportunity.Id)
 				.Set(x => x.SaLikelihood, _metadataDraft.SaLikelihood)
-				.Set(x => x.Assets, parsedAssets);
+				.Set(x => x.Assets, parsedAssets)
+				.Set(x => x.MEDDPICC, _metadataDraft.MEDDPICC);
 
 			await MetadataCollection.UpdateOneAsync(
 				filter,
@@ -197,5 +274,18 @@
 	private void RemoveAsset(OppAsset asset)
 	{
 		_metadataDraft.Assets.Remove(asset);
+	}
+
+	private void ToggleNotesPreview()
+	{
+		if (!_isPreviewingNotes)
+		{
+			var notes = _metadataDraft.MEDDPICC.MEDDPICC_Notes;
+			_notesPreviewMarkup = string.IsNullOrEmpty(notes)
+				? (MarkupString)string.Empty
+				: (MarkupString)_markdown.Transform(notes);
+		}
+
+		_isPreviewingNotes = !_isPreviewingNotes;
 	}
 }

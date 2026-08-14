@@ -88,3 +88,7 @@ h1:focus {
     background: lightgrey;
     color: var(--bs-body);
   }
+
+dialog article {
+  max-width: 75vw !important;
+}

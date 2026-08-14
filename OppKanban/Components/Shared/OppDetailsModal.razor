@@ -1,5 +1,6 @@
 @using OppKanban.Datamodels
 @using Microsoft.FluentUI.AspNetCore.Components;
+@using HeyRed.MarkdownSharp;
 
 @if (Opportunity is not null)
 {
@@ -8,6 +9,7 @@
 			<header>
 				<button type="button" aria-label="Close" rel="prev" @onclick="CloseModalAsync"></button>
 				<p><strong>Opportunity Details</strong></p>
+				<button type="button" class="secondary" aria-label="Edit metadata" title="Edit metadata" @onclick="EditOpportunityAsync">Edit</button>
 			</header>
 
 			<h3>Basic Information</h3>
@@ -50,6 +52,14 @@
 							<td title="SA Likelihood"><FluentIcon Value="@(new Icons.Regular.Size20.DocumentPercent())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
 							<td>@Opportunity.OppMetadata.SaLikelihood.ToString("0")%</td>
 						</tr>
+						<tr>
+							<td title="MEDDPICC"><FluentIcon Value="@(new Icons.Regular.Size20.ClipboardCheckmark())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td><MEDDPICCVis MEDDPICC="@Opportunity.OppMetadata.MEDDPICC" /></td>
+						</tr>
+						<tr>
+							<td title="MEDDPICC Notes"><FluentIcon Value="@(new Icons.Regular.Size20.Notepad())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td>@_meddpiccNotesMarkup</td>
+						</tr>
 					}
 				</tbody>
 			</table>
@@ -80,8 +90,26 @@
 	[Parameter]
 	public EventCallback OnClose { get; set; }
 
+	[Parameter]
+	public EventCallback OnEdit { get; set; }
+	Markdown mark = new Markdown();
+	private MarkupString _meddpiccNotesMarkup;
+
 	private async Task CloseModalAsync()
 	{
 		await OnClose.InvokeAsync();
 	}
+
+	private async Task EditOpportunityAsync()
+	{
+		await OnEdit.InvokeAsync();
+	}
+
+	// on parameter set, if Opportunity is not null and has a MgrNote, convert it to MarkupString
+	protected override void OnParametersSet() {
+		if (Opportunity?.OppMetadata?.MEDDPICC is not null && !string.IsNullOrEmpty(Opportunity.OppMetadata.MEDDPICC.MEDDPICC_Notes)){
+			_meddpiccNotesMarkup = (MarkupString)mark.Transform(Opportunity.OppMetadata.MEDDPICC.MEDDPICC_Notes);
+		}
+	}
+	
 }

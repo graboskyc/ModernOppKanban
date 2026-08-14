@@ -220,3 +220,7 @@
 		min-height: 80vh;
 	}
 }
+
+dialog article {
+  max-width: 75vw !important;
+}

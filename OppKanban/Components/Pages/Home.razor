@@ -110,7 +110,7 @@ else
 
 @if (_isSearchResultModalOpen)
 {
-	<OppDetailsModal Opportunity="_selectedSearchOpp" OnClose="CloseSearchResultModal" />
+	<OppDetailsModal Opportunity="_selectedSearchOpp" OnClose="CloseSearchResultModal" OnEdit="EditSelectedOpportunityAsync" />
 }
 
 <Toast Message="@_statusMessage" Show="_showToast">
@@ -220,6 +220,18 @@ else
 	{
 		_isSearchResultModalOpen = false;
 		_selectedSearchOpp = null;
+	}
+
+	private Task EditSelectedOpportunityAsync()
+	{
+		if (_selectedSearchOpp is not null)
+		{
+			_selectedOpp = _selectedSearchOpp.OppDetails;
+			_isSearchResultModalOpen = false;
+			_isMetadataModalOpen = true;
+		}
+
+		return Task.CompletedTask;
 	}
 
 	private void HandleMetadataSaved(OppMetadata metadata)

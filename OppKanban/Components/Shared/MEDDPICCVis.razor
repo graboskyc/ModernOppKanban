@@ -1,0 +1,19 @@
+@using OppKanban.Datamodels;
+
+@if(MEDDPICC != null) {
+    <div>
+        <span style="color:@(MEDDPICC.MEDDPICC_M ? "#e48500" : "#aaaaaa")">M</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_E ? "#e48500" : "#aaaaaa")">E</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_Dc ? "#e48500" : "#aaaaaa")">D</span>        
+        <span style="color:@(MEDDPICC.MEDDPICC_Dp ? "#e48500" : "#aaaaaa")">D</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_P ? "#e48500" : "#aaaaaa")">P</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_I ? "#e48500" : "#aaaaaa")">I</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_Ch ? "#e48500" : "#aaaaaa")">C</span>
+        <span style="color:@(MEDDPICC.MEDDPICC_Co ? "#e48500" : "#aaaaaa")">C</span>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public MEDDPICC MEDDPICC { get; set; } = new MEDDPICC();
+}
