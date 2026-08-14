@@ -4,7 +4,29 @@
   "collection": "opps",
   "definition": {
     "mappings": {
-      "dynamic": true
+      "dynamic": true,
+      "fields": {
+        "accountName": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "autocomplete",
+            "maxGrams":7,
+            "minGrams":3
+          }
+        ],
+        "oppName": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "autocomplete",
+            "maxGrams":7,
+            "minGrams":3
+          }
+        ]
+      }
     }
   }
 }

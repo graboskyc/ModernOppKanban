@@ -51,6 +51,8 @@
                 .Search(Builders<Datamodels.OppBase>.Search.Compound()
                     .Should(Builders<Datamodels.OppBase>.Search.Text(o => o.AccountName, _oppName))
                     .Should(Builders<Datamodels.OppBase>.Search.Text(o => o.OppName, _oppName))
+                    .Should(Builders<Datamodels.OppBase>.Search.Autocomplete(o => o.AccountName, _oppName))
+                    .Should(Builders<Datamodels.OppBase>.Search.Autocomplete(o => o.OppName, _oppName))
                 , indexName: "default")
                 .Limit(10)
                 .ToListAsync(cancellationToken);
