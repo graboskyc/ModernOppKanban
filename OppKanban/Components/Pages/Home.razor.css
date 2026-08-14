@@ -100,6 +100,22 @@
 	cursor: grabbing;
 }
 
+.opportunity-card-highlighted {
+	border-color: #e48500;
+	box-shadow: 0 0 0 2px rgba(228, 133, 0, 0.55), 0 0 16px 4px rgba(228, 133, 0, 0.55);
+	animation: opportunity-card-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes opportunity-card-glow {
+	0%, 100% {
+		box-shadow: 0 0 0 2px rgba(228, 133, 0, 0.55), 0 0 12px 3px rgba(228, 133, 0, 0.45);
+	}
+
+	50% {
+		box-shadow: 0 0 0 2px rgba(228, 133, 0, 0.8), 0 0 22px 7px rgba(228, 133, 0, 0.7);
+	}
+}
+
 .kanban-lane:has(.opportunity-card[draggable="true"]:active) {
 	border-color: #e48500;
 }

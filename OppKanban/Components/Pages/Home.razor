@@ -54,7 +54,7 @@ else
 				<div class="kanban-cards">
 					@foreach (var opp in stageOpps)
 					{
-						<article class="opportunity-card" draggable="true" @ondragstart="() => StartDragging(opp)" @ondragend="ClearDragging">
+						<article class="opportunity-card @(IsHighlighted(opp) ? "opportunity-card-highlighted" : string.Empty)" draggable="true" @ondragstart="() => StartDragging(opp)" @ondragend="ClearDragging">
 							<div class="opportunity-card-heading">
 								<div>
 									<h3>@opp.OppDetails.OppName</h3>
@@ -134,6 +134,7 @@ else
 	private OpportunityStage? _draggedFromStage;
 	private OppView? _selectedSearchOpp;
 	private bool _isSearchResultModalOpen;
+	private string? _highlightedOppId;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -178,9 +179,15 @@ else
 		}
 	}
 
+	private bool IsHighlighted(OppView opp) =>
+		(_isMetadataModalOpen || _isSearchResultModalOpen)
+		&& _highlightedOppId is not null
+		&& opp.OppDetails.Id == _highlightedOppId;
+
 	private void OpenMetadataModalAsync(OppView opp)
 	{
 		_selectedOpp = opp.OppDetails;
+		_highlightedOppId = opp.OppDetails.Id;
 		_isMetadataModalOpen = true;
 	}
 
@@ -188,6 +195,7 @@ else
 	{
 		_isMetadataModalOpen = false;
 		_selectedOpp = null;
+		_highlightedOppId = null;
 	}
 
 	private async Task HandleOpportunitySelectedAsync(OppBase opp)
@@ -213,6 +221,7 @@ else
 		}
 
 		_selectedSearchOpp = view;
+		_highlightedOppId = view.OppDetails.Id;
 		_isSearchResultModalOpen = true;
 	}
 
@@ -220,6 +229,7 @@ else
 	{
 		_isSearchResultModalOpen = false;
 		_selectedSearchOpp = null;
+		_highlightedOppId = null;
 	}
 
 	private Task EditSelectedOpportunityAsync()
