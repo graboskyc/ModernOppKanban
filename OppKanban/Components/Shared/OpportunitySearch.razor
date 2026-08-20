@@ -1,17 +1,28 @@
 @inject IMongoCollection<Datamodels.OppBase> OppCollection;
+@inject IMongoCollection<Datamodels.OppMetadata> MetadataCollection;
 @using MongoDB.Driver;
 @using MongoDB.Driver.Search;
+@using MongoDB.Bson.Serialization.Attributes;
 @using Microsoft.FluentUI.AspNetCore.Components;
 
 <div class="autocomplete" style="width:@Width">
         <BasicSearchBar SearchTerm="@_oppName" Placeholder="Opportunity Name..." OnSearchCallback="@SearchOpportunityName" />
 
-    @if(_oppList.Count > 0) {
+    @if((_oppList.Count > 0) || (_championMatches.Count > 0)) {
         <ul class="options">
             @foreach (var opp in _oppList) {
                 <li class="option" @onclick="@(()=>SelectOpp(opp))">
                         <strong><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppName</strong><br />
                         <small><FluentIcon Value="@(new Icons.Regular.Size16.Building())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />@opp.AccountName</small>
+                </li>
+            }
+            @foreach (var championMatch in _championMatches) {
+                <li class="option" @onclick="@(()=>SelectOpp(new Datamodels.OppBase { Id = championMatch.OppId }))">
+                        <strong><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @championMatch.OppId</strong><br />
+                        <small>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Text())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> 
+                            @foreach (var text in championMatch.Highlights.SelectMany(h => h.Texts)) { @text.Value }
+                        </small>
                 </li>
             }
         </ul>
@@ -31,11 +42,13 @@
 
     private string _oppName = "";
     private List<Datamodels.OppBase> _oppList = new List<Datamodels.OppBase>();
+    private List<ChampionSearchHit> _championMatches = new List<ChampionSearchHit>();
     private CancellationTokenSource _oppSearchCts;
 
     private async Task ClearAccount() {
         _oppName = "";
         _oppList.Clear();
+        _championMatches.Clear();
         await OnClearAccount.InvokeAsync();
     }
 
@@ -56,8 +69,20 @@
                 , indexName: "default")
                 .Limit(10)
                 .ToListAsync(cancellationToken);
-            
+
+            var championMatches = await MetadataCollection.Aggregate()
+                .Search(Builders<Datamodels.OppMetadata>.Search.Text(m => m.TechnicalChampions.Select(c => c.Name), _oppName)
+                , new SearchHighlightOptions<Datamodels.OppMetadata>(m => m.TechnicalChampions.Select(c => c.Name))
+                , indexName: "default")
+                .Project<ChampionSearchHit>(Builders<Datamodels.OppMetadata>.Projection
+                    .Include(m => m.OppId)
+                    .MetaSearchHighlights("highlights"))
+                .Limit(10)
+                .ToListAsync(cancellationToken);
+
             if (cancellationToken.IsCancellationRequested) return;
+
+            _championMatches = championMatches;
             _oppList = result;
             await InvokeAsync(StateHasChanged);
         } catch (OperationCanceledException) {
@@ -68,5 +93,13 @@
     private async Task SelectOpp(Datamodels.OppBase opp) {
         _oppList.Clear();
         await OnOpportunitySelected.InvokeAsync(opp);
+    }
+
+    [BsonIgnoreExtraElements]
+    public class ChampionSearchHit {
+        [BsonElement("oppId")]
+        public string OppId { get; set; } = "";
+        [BsonElement("highlights")]
+        public List<SearchHighlight> Highlights { get; set; } = new List<SearchHighlight>();
     }
 }
