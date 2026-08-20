@@ -13,6 +13,16 @@ namespace OppKanban.Datamodels
     }
 
     [BsonIgnoreExtraElements]
+    public class TechnicalChampion {
+        [BsonElement("name")]
+        public string Name {get;set;} = "";
+        [BsonElement("link")]
+        public string Link {get;set;} = "";
+        [BsonElement("stage")]
+        public TechnicalChampionStage Stage {get;set;} = TechnicalChampionStage.Identify;
+    }
+
+    [BsonIgnoreExtraElements]
     public class MEDDPICC {
         public bool MEDDPICC_M { get; set; } = false;
         public bool MEDDPICC_E { get; set; } = false;
@@ -39,6 +49,8 @@ namespace OppKanban.Datamodels
         public double SaLikelihood {get;set;} = 0;
         [BsonElement("assets")]
         public List<OppAsset> Assets {get;set;} = new List<OppAsset>();
+        [BsonElement("technicalChampions")]
+        public List<TechnicalChampion> TechnicalChampions {get;set;} = new List<TechnicalChampion>();
         [BsonElement("meddpicc")]
         public MEDDPICC MEDDPICC {get;set;} = new MEDDPICC();
     }

@@ -1,0 +1,10 @@
+{
+  "type": "searchIndex",
+  "name": "default",
+  "collection": "metadata",
+  "definition": {
+        "mappings": {
+            "dynamic": true
+        }
+    }
+}

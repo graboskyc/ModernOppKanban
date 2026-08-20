@@ -53,6 +53,14 @@
 							<td>@Opportunity.OppMetadata.SaLikelihood.ToString("0")%</td>
 						</tr>
 						<tr>
+							<td title="POC Doc"><FluentIcon Value="@(new Icons.Regular.Size20.Document())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td><a href="@Opportunity.OppMetadata.POCDoc" target="_blank" rel="noopener noreferrer">POC Doc</a></td>
+						</tr>
+						<tr>
+							<td title="Sizing Link"><FluentIcon Value="@(new Icons.Regular.Size20.Ruler())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td><a href="@Opportunity.OppMetadata.SizingLink" target="_blank" rel="noopener noreferrer">Sizing Link</a></td>
+						</tr>
+						<tr>
 							<td title="MEDDPICC"><FluentIcon Value="@(new Icons.Regular.Size20.ClipboardCheckmark())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
 							<td><MEDDPICCVis MEDDPICC="@Opportunity.OppMetadata.MEDDPICC" /></td>
 						</tr>
@@ -74,6 +82,20 @@
 						{
 							<tr>
 								<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
+							</tr>
+						}
+					</tbody></table>
+				}
+
+				@if (Opportunity.OppMetadata.TechnicalChampions.Count > 0)
+				{
+					<h3>Technical Champions</h3>
+					<table class="striped"><tbody>
+						@foreach (var champion in Opportunity.OppMetadata.TechnicalChampions)
+						{
+							<tr>
+								<td><a href="@champion.Link" target="_blank" rel="noopener noreferrer">@champion.Name</a></td>
+								<td>@TechnicalChampionStageHelper.GetStageName(champion.Stage)</td>
 							</tr>
 						}
 					</tbody></table>

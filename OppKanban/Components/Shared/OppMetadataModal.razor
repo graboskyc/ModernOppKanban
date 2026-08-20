@@ -29,6 +29,12 @@
 					<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
 					<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
 
+					<label for="sizing-document">Sizing document</label>
+					<input id="sizing-document" type="url" placeholder="Sizing document link" @bind="_metadataDraft.SizingLink" @bind:event="oninput" />
+
+					<label for="poc-document">POC document</label>
+					<input id="poc-document" type="url" placeholder="POC document link" @bind="_metadataDraft.POCDoc" @bind:event="oninput" />
+
 					<label for="metadata-assets">Assets</label>
 					<div role="group">
 						<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
@@ -46,6 +52,39 @@
 									<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
 									<td width="15%">
 										<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
+											<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+										</button>
+									</td>
+								</tr>
+							}
+						</tbody></table>
+					}
+
+					<label for="technical-champion-name">Technical Champions</label>
+					<div role="group">
+						<input id="technical-champion-name" type="text" placeholder="Champion name" @bind="_newTechnicalChampionName" @bind:event="oninput" />
+						<input type="url" placeholder="Champion link" @bind="_newTechnicalChampionLink" @bind:event="oninput" />
+						<select aria-label="Technical champion stage" @bind="_newTechnicalChampionStage">
+							@foreach (var stage in TechnicalChampionStageHelper.GetAllStages())
+							{
+								<option value="@stage">@TechnicalChampionStageHelper.GetStageName(stage)</option>
+							}
+						</select>
+						<button type="button" @onclick="AddTechnicalChampion" disabled="@(!CanAddTechnicalChampion)">
+							<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+						</button>
+					</div>
+
+					@if (_metadataDraft.TechnicalChampions.Count != 0)
+					{
+						<table><tbody>
+							@foreach (var champion in _metadataDraft.TechnicalChampions)
+							{
+								<tr>
+									<td><a href="@champion.Link" target="_blank" rel="noopener noreferrer">@champion.Name</a></td>
+									<td>@TechnicalChampionStageHelper.GetStageName(champion.Stage)</td>
+									<td width="15%">
+										<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveTechnicalChampion(champion)">
 											<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
 										</button>
 									</td>
@@ -152,6 +191,9 @@
 	private OppMetadata _metadataDraft = new();
 	private string _newAssetName = string.Empty;
 	private string _newAssetLink = string.Empty;
+	private string _newTechnicalChampionName = string.Empty;
+	private string _newTechnicalChampionLink = string.Empty;
+	private TechnicalChampionStage _newTechnicalChampionStage = TechnicalChampionStage.Identify;
 	private bool _isLoading = true;
 	private bool _isSaving;
 	private bool _isPreviewingNotes;
@@ -170,6 +212,9 @@
 		_metadataDraft = new OppMetadata { OppId = Opportunity.Id };
 		_newAssetName = string.Empty;
 		_newAssetLink = string.Empty;
+		_newTechnicalChampionName = string.Empty;
+		_newTechnicalChampionLink = string.Empty;
+		_newTechnicalChampionStage = TechnicalChampionStage.Identify;
 		_isPreviewingNotes = true;
 
 		try
@@ -184,8 +229,11 @@
 				{
 					Id = metadata.Id,
 					OppId = metadata.OppId,
+					SizingLink = metadata.SizingLink,
+					POCDoc = metadata.POCDoc,
 					SaLikelihood = metadata.SaLikelihood,
 					Assets = metadata.Assets.ToList(),
+					TechnicalChampions = metadata.TechnicalChampions.ToList(),
 					MEDDPICC = metadata.MEDDPICC ?? new MEDDPICC()
 				};
 			}
@@ -219,14 +267,18 @@
 
 		_isSaving = true;
 		var parsedAssets = _metadataDraft.Assets.ToList();
+		var technicalChampions = _metadataDraft.TechnicalChampions.ToList();
 
 		try
 		{
 			var filter = Builders<OppMetadata>.Filter.Eq(x => x.OppId, Opportunity.Id);
 			var update = Builders<OppMetadata>.Update
 				.Set(x => x.OppId, Opportunity.Id)
+				.Set(x => x.SizingLink, _metadataDraft.SizingLink)
+				.Set(x => x.POCDoc, _metadataDraft.POCDoc)
 				.Set(x => x.SaLikelihood, _metadataDraft.SaLikelihood)
 				.Set(x => x.Assets, parsedAssets)
+				.Set(x => x.TechnicalChampions, technicalChampions)
 				.Set(x => x.MEDDPICC, _metadataDraft.MEDDPICC);
 
 			await MetadataCollection.UpdateOneAsync(
@@ -236,6 +288,7 @@
 
 			_metadataDraft.OppId = Opportunity.Id;
 			_metadataDraft.Assets = parsedAssets;
+			_metadataDraft.TechnicalChampions = technicalChampions;
 			await OnToast.InvokeAsync("Metadata saved.");
 			await OnSaved.InvokeAsync(_metadataDraft);
 		}
@@ -274,6 +327,35 @@
 	private void RemoveAsset(OppAsset asset)
 	{
 		_metadataDraft.Assets.Remove(asset);
+	}
+
+	private void AddTechnicalChampion()
+	{
+		var name = _newTechnicalChampionName.Trim();
+		var link = _newTechnicalChampionLink.Trim();
+		if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(link))
+		{
+			return;
+		}
+
+		_metadataDraft.TechnicalChampions.Add(new TechnicalChampion
+		{
+			Name = name,
+			Link = link,
+			Stage = _newTechnicalChampionStage
+		});
+		_newTechnicalChampionName = string.Empty;
+		_newTechnicalChampionLink = string.Empty;
+		_newTechnicalChampionStage = TechnicalChampionStage.Identify;
+	}
+
+	private bool CanAddTechnicalChampion =>
+		!string.IsNullOrWhiteSpace(_newTechnicalChampionName) &&
+		!string.IsNullOrWhiteSpace(_newTechnicalChampionLink);
+
+	private void RemoveTechnicalChampion(TechnicalChampion champion)
+	{
+		_metadataDraft.TechnicalChampions.Remove(champion);
 	}
 
 	private void ToggleNotesPreview()
