@@ -9,6 +9,7 @@
     height: auto;
     min-height: 100px;
     display: block;
+    overflow: visible;
 }
 
 .events-timeline-line {

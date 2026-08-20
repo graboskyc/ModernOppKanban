@@ -5,7 +5,7 @@
     @if (OrderedEvents.Count > 0)
     {
         <svg class="events-timeline" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMinYMin meet">
-            <line x1="30" y1="@LineY" x2="@(ViewBoxWidth - 30)" y2="@LineY" class="events-timeline-line" />
+            <line x1="@HorizontalPadding" y1="@LineY" x2="@(ViewBoxWidth - HorizontalPadding)" y2="@LineY" class="events-timeline-line" />
 
             @for (int i = 0; i < OrderedEvents.Count; i++)
             {
@@ -40,16 +40,17 @@
 
     // vertical position of the timeline, leaving room above and below for alternating labels
     private const int LineY = 50;
+    private const int HorizontalPadding = 120;
 
     private int ViewBoxHeight => 100;
 
-    private int ViewBoxWidth => Math.Max(300, OrderedEvents.Count * 130);
+    private int ViewBoxWidth => Math.Max(300, OrderedEvents.Count * 130 + (HorizontalPadding * 2));
 
     private double GetPointX(int index)
     {
         if (OrderedEvents.Count <= 1) return ViewBoxWidth / 2.0;
 
-        double spacing = (ViewBoxWidth - 60) / (double)(OrderedEvents.Count - 1);
-        return 30 + (index * spacing);
+        double spacing = (ViewBoxWidth - (HorizontalPadding * 2)) / (double)(OrderedEvents.Count - 1);
+        return HorizontalPadding + (index * spacing);
     }
 }
