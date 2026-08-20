@@ -1,0 +1,55 @@
+@using OppKanban.Datamodels
+@using System.Linq
+
+<div class="events-timeline-container" style="width: @Width;">
+    @if (OrderedEvents.Count > 0)
+    {
+        <svg class="events-timeline" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMinYMin meet">
+            <line x1="30" y1="@LineY" x2="@(ViewBoxWidth - 30)" y2="@LineY" class="events-timeline-line" />
+
+            @for (int i = 0; i < OrderedEvents.Count; i++)
+            {
+                var evt = OrderedEvents[i];
+                var x = GetPointX(i);
+                var isPast = evt.EventDate < DateTime.Now;
+                var labelBelow = i % 2 == 0;
+
+                <line x1="@x" y1="@LineY" x2="@x" y2="@(labelBelow ? LineY + 16 : LineY - 16)" class="events-timeline-tick" />
+
+                <circle cx="@x" cy="@LineY" r="7" class="events-timeline-point @(isPast ? "past" : "future")" title="@($"{evt.EventName} - {evt.EventDate:yyyy-MM-dd}")" />
+
+                <g transform="@($"translate({x},{(labelBelow ? LineY + 32 : LineY - 24)})")" class="events-timeline-date">
+                    <text>@evt.EventDate.ToString("yyyy-MM-dd")</text>
+                </g>
+                <g transform="@($"translate({x},{(labelBelow ? LineY + 48 : LineY - 40)})")" class="events-timeline-name">
+                    <text>@evt.EventName</text>
+                </g>
+            }
+        </svg>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<EventEntry> Events { get; set; } = new();
+
+    [Parameter]
+    public string Width { get; set; } = "100%";
+
+    private List<EventEntry> OrderedEvents => Events?.OrderBy(e => e.EventDate).ToList() ?? new();
+
+    // vertical position of the timeline, leaving room above and below for alternating labels
+    private const int LineY = 50;
+
+    private int ViewBoxHeight => 100;
+
+    private int ViewBoxWidth => Math.Max(300, OrderedEvents.Count * 130);
+
+    private double GetPointX(int index)
+    {
+        if (OrderedEvents.Count <= 1) return ViewBoxWidth / 2.0;
+
+        double spacing = (ViewBoxWidth - 60) / (double)(OrderedEvents.Count - 1);
+        return 30 + (index * spacing);
+    }
+}

@@ -23,6 +23,14 @@ namespace OppKanban.Datamodels
     }
 
     [BsonIgnoreExtraElements]
+    public class EventEntry {
+        [BsonElement("eventName")]
+        public string EventName {get;set;} = "";
+        [BsonElement("eventDate")]
+        public DateTime EventDate {get;set;} = DateTime.Now;
+    }
+
+    [BsonIgnoreExtraElements]
     public class MEDDPICC {
         public bool MEDDPICC_M { get; set; } = false;
         public bool MEDDPICC_E { get; set; } = false;
@@ -51,6 +59,8 @@ namespace OppKanban.Datamodels
         public List<OppAsset> Assets {get;set;} = new List<OppAsset>();
         [BsonElement("technicalChampions")]
         public List<TechnicalChampion> TechnicalChampions {get;set;} = new List<TechnicalChampion>();
+        [BsonElement("events")]
+        public List<EventEntry> Events {get;set;} = new List<EventEntry>();
         [BsonElement("meddpicc")]
         public MEDDPICC MEDDPICC {get;set;} = new MEDDPICC();
     }

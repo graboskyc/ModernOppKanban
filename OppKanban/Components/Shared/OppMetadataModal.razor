@@ -1,3 +1,4 @@
+@using System.Linq
 @using OppKanban.Datamodels
 @using MongoDB.Driver
 @inject IMongoCollection<OppMetadata> MetadataCollection;
@@ -25,120 +26,161 @@
 			{
 
 				<article>
-					<h4>Basics</h4>
-					<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
-					<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
 
-					<label for="sizing-document">Sizing document</label>
-					<input id="sizing-document" type="url" placeholder="Sizing document link" @bind="_metadataDraft.SizingLink" @bind:event="oninput" />
+					<details name="basics">
+						<summary>Basics <small><i>(click to toggle)</i></small></summary>
+						
+						<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
+						<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
 
-					<label for="poc-document">POC document</label>
-					<input id="poc-document" type="url" placeholder="POC document link" @bind="_metadataDraft.POCDoc" @bind:event="oninput" />
+						<label for="sizing-document">Sizing document</label>
+						<input id="sizing-document" type="url" placeholder="Sizing document link" @bind="_metadataDraft.SizingLink" @bind:event="oninput" />
 
-					<label for="metadata-assets">Assets</label>
-					<div role="group">
-						<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
-						<input type="url" placeholder="Asset link" @bind="_newAssetLink" @bind:event="oninput" />
-						<button type="button" @onclick="AddAsset" disabled="@(!CanAddAsset)">
-							<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
-						</button>
-					</div>
+						<label for="poc-document">POC document</label>
+						<input id="poc-document" type="url" placeholder="POC document link" @bind="_metadataDraft.POCDoc" @bind:event="oninput" />
+
+						<label for="metadata-assets">Assets</label>
+						<div role="group">
+							<input id="metadata-assets" type="text" placeholder="Asset name" @bind="_newAssetName" @bind:event="oninput" />
+							<input type="url" placeholder="Asset link" @bind="_newAssetLink" @bind:event="oninput" />
+							<button type="button" @onclick="AddAsset" disabled="@(!CanAddAsset)">
+								<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+							</button>
+						</div>
+					</details>
 
 					@if (_metadataDraft.Assets.Count != 0)	{
-						<table><tbody>
-							@foreach (var asset in _metadataDraft.Assets)
-							{
-								<tr>
-									<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
-									<td width="15%">
-										<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
-											<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
-										</button>
-									</td>
-								</tr>
-							}
-						</tbody></table>
+						<details name="assets">
+							<summary>Assets <small><i>(click to toggle)</i></small></summary>
+								<table><tbody>
+									@foreach (var asset in _metadataDraft.Assets)
+									{
+										<tr>
+											<td><a href="@asset.Link" target="_blank" rel="noopener noreferrer">@asset.Name</a></td>
+											<td width="15%">
+												<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveAsset(asset)">
+													<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+												</button>
+											</td>
+										</tr>
+									}
+								</tbody></table>
+						</details>
 					}
 
-					<label for="technical-champion-name">Technical Champions</label>
-					<div role="group">
-						<input id="technical-champion-name" type="text" placeholder="Champion name" @bind="_newTechnicalChampionName" @bind:event="oninput" />
-						<input type="url" placeholder="Champion link" @bind="_newTechnicalChampionLink" @bind:event="oninput" />
-						<select aria-label="Technical champion stage" @bind="_newTechnicalChampionStage">
-							@foreach (var stage in TechnicalChampionStageHelper.GetAllStages())
-							{
-								<option value="@stage">@TechnicalChampionStageHelper.GetStageName(stage)</option>
-							}
-						</select>
-						<button type="button" @onclick="AddTechnicalChampion" disabled="@(!CanAddTechnicalChampion)">
-							<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
-						</button>
-					</div>
+					<details name="launch-events">
+						<summary>Launch Events <small><i>(click to toggle)</i></small></summary>
 
-					@if (_metadataDraft.TechnicalChampions.Count != 0)
-					{
-						<table><tbody>
-							@foreach (var champion in _metadataDraft.TechnicalChampions)
-							{
+						<label for="event-name">Launch Events</label>
+						<div role="group">
+							<input id="event-name" type="text" placeholder="Event name" @bind="_newEventName" @bind:event="oninput" />
+							<input type="date" @bind="_newEventDate" @bind:event="oninput" aria-label="Date" />
+							<button type="button" @onclick="AddEvent" disabled="@(!CanAddEvent)">
+								<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+							</button>
+						</div>
+
+						@if (_metadataDraft.Events.Count != 0)
+						{
+							<table><tbody>
+								@foreach (var evt in _metadataDraft.Events.OrderBy(e => e.EventDate))
+								{
+									<tr>
+										<td>@evt.EventName</td>
+										<td>@evt.EventDate.ToString("yyyy-MM-dd")</td>
+										<td width="15%">
+											<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveEvent(evt)">
+												<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+											</button>
+										</td>
+									</tr>
+								}
+							</tbody></table>
+						}
+					</details>
+
+					<details name="technical-champions">
+						<summary>Technical Champions <small><i>(click to toggle)</i></small></summary>
+				
+						<label for="technical-champion-name">Technical Champions</label>
+						<div role="group">
+							<input id="technical-champion-name" type="text" placeholder="Champion name" @bind="_newTechnicalChampionName" @bind:event="oninput" />
+							<input type="url" placeholder="Champion link" @bind="_newTechnicalChampionLink" @bind:event="oninput" />
+							<select aria-label="Technical champion stage" @bind="_newTechnicalChampionStage">
+								@foreach (var stage in TechnicalChampionStageHelper.GetAllStages())
+								{
+									<option value="@stage">@TechnicalChampionStageHelper.GetStageName(stage)</option>
+								}
+							</select>
+							<button type="button" @onclick="AddTechnicalChampion" disabled="@(!CanAddTechnicalChampion)">
+								<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+							</button>
+						</div>
+
+						@if (_metadataDraft.TechnicalChampions.Count != 0)
+						{
+							<table><tbody>
+								@foreach (var champion in _metadataDraft.TechnicalChampions)
+								{
+									<tr>
+										<td><a href="@champion.Link" target="_blank" rel="noopener noreferrer">@champion.Name</a></td>
+										<td>@TechnicalChampionStageHelper.GetStageName(champion.Stage)</td>
+										<td width="15%">
+											<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveTechnicalChampion(champion)">
+												<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+											</button>
+										</td>
+									</tr>
+								}
+							</tbody></table>
+						}
+					</details>
+
+					<details name="meddpicc">
+						<summary>MEDDPICC <small><i>(click to toggle)</i></small></summary>
+						<table class="table" style="text-align: center;">
+							<thead class="thead-dark">
 								<tr>
-									<td><a href="@champion.Link" target="_blank" rel="noopener noreferrer">@champion.Name</a></td>
-									<td>@TechnicalChampionStageHelper.GetStageName(champion.Stage)</td>
-									<td width="15%">
-										<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveTechnicalChampion(champion)">
-											<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
-										</button>
-									</td>
+									<th>Metrics</th>
+									<th>Economic<br>Buyer</th>
+									<th>Decision<br>Criteria</th>
+									<th>Decision<br>Process</th>
+									<th>Paper<br>Process</th>
+									<th>Identify<br>Pain</th>
+									<th>Champion</th>
+									<th>Competition</th>
 								</tr>
-							}
-						</tbody></table>
-					}
-				</article>
+							</thead>
+							<tbody>
+								<tr>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_M, v => _metadataDraft.MEDDPICC.MEDDPICC_M = v, "Metrics")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_E, v => _metadataDraft.MEDDPICC.MEDDPICC_E = v, "Economic Buyer")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dc, v => _metadataDraft.MEDDPICC.MEDDPICC_Dc = v, "Decision Criteria")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dp, v => _metadataDraft.MEDDPICC.MEDDPICC_Dp = v, "Decision Process")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_P, v => _metadataDraft.MEDDPICC.MEDDPICC_P = v, "Paper Process")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_I, v => _metadataDraft.MEDDPICC.MEDDPICC_I = v, "Identify Pain")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Ch, v => _metadataDraft.MEDDPICC.MEDDPICC_Ch = v, "Champion")</td>
+									<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Co, v => _metadataDraft.MEDDPICC.MEDDPICC_Co = v, "Competition")</td>
+								</tr>
+							</tbody>
+						</table>
+					</details>
 
-				<article>
-					<h4>MEDDPICC</h4>
-					<table class="table" style="text-align: center;">
-						<thead class="thead-dark">
-							<tr>
-								<th>Metrics</th>
-								<th>Economic<br>Buyer</th>
-								<th>Decision<br>Criteria</th>
-								<th>Decision<br>Process</th>
-								<th>Paper<br>Process</th>
-								<th>Identify<br>Pain</th>
-								<th>Champion</th>
-								<th>Competition</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_M, v => _metadataDraft.MEDDPICC.MEDDPICC_M = v, "Metrics")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_E, v => _metadataDraft.MEDDPICC.MEDDPICC_E = v, "Economic Buyer")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dc, v => _metadataDraft.MEDDPICC.MEDDPICC_Dc = v, "Decision Criteria")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Dp, v => _metadataDraft.MEDDPICC.MEDDPICC_Dp = v, "Decision Process")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_P, v => _metadataDraft.MEDDPICC.MEDDPICC_P = v, "Paper Process")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_I, v => _metadataDraft.MEDDPICC.MEDDPICC_I = v, "Identify Pain")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Ch, v => _metadataDraft.MEDDPICC.MEDDPICC_Ch = v, "Champion")</td>
-								<td>@MeddpiccToggle(() => _metadataDraft.MEDDPICC.MEDDPICC_Co, v => _metadataDraft.MEDDPICC.MEDDPICC_Co = v, "Competition")</td>
-							</tr>
-						</tbody>
-					</table>
-				</article>
-
-				<article>
-					<header style="display:flex;justify-content:space-between;align-items:center;">
-						<h4 style="margin:0;">Notes</h4>
+					<details name="notes">
+						<summary>Notes <small><i>(click to toggle)</i></small></summary>
+					
 						<button type="button" class="secondary" @onclick="ToggleNotesPreview">
 							@(_isPreviewingNotes ? "Edit" : "Preview")
 						</button>
-					</header>
-					@if (_isPreviewingNotes)
-					{
-						<div class="notes-preview">@_notesPreviewMarkup</div>
-					}
-					else
-					{
-						<textarea rows="5" @bind="_metadataDraft.MEDDPICC.MEDDPICC_Notes" @bind:event="oninput"></textarea>
-					}
+						@if (_isPreviewingNotes)
+						{
+							<div class="notes-preview">@_notesPreviewMarkup</div>
+						}
+						else
+						{
+							<textarea rows="5" @bind="_metadataDraft.MEDDPICC.MEDDPICC_Notes" @bind:event="oninput"></textarea>
+						}
+					</details>
 				</article>
 
 				<footer>
@@ -194,6 +236,8 @@
 	private string _newTechnicalChampionName = string.Empty;
 	private string _newTechnicalChampionLink = string.Empty;
 	private TechnicalChampionStage _newTechnicalChampionStage = TechnicalChampionStage.Identify;
+	private string _newEventName = string.Empty;
+	private DateTime _newEventDate = DateTime.Now.Date;
 	private bool _isLoading = true;
 	private bool _isSaving;
 	private bool _isPreviewingNotes;
@@ -215,6 +259,8 @@
 		_newTechnicalChampionName = string.Empty;
 		_newTechnicalChampionLink = string.Empty;
 		_newTechnicalChampionStage = TechnicalChampionStage.Identify;
+		_newEventName = string.Empty;
+		_newEventDate = DateTime.Now.Date;
 		_isPreviewingNotes = true;
 
 		try
@@ -234,6 +280,7 @@
 					SaLikelihood = metadata.SaLikelihood,
 					Assets = metadata.Assets.ToList(),
 					TechnicalChampions = metadata.TechnicalChampions.ToList(),
+					Events = metadata.Events.ToList(),
 					MEDDPICC = metadata.MEDDPICC ?? new MEDDPICC()
 				};
 			}
@@ -268,6 +315,7 @@
 		_isSaving = true;
 		var parsedAssets = _metadataDraft.Assets.ToList();
 		var technicalChampions = _metadataDraft.TechnicalChampions.ToList();
+		var events = _metadataDraft.Events.ToList();
 
 		try
 		{
@@ -279,6 +327,7 @@
 				.Set(x => x.SaLikelihood, _metadataDraft.SaLikelihood)
 				.Set(x => x.Assets, parsedAssets)
 				.Set(x => x.TechnicalChampions, technicalChampions)
+				.Set(x => x.Events, events)
 				.Set(x => x.MEDDPICC, _metadataDraft.MEDDPICC);
 
 			await MetadataCollection.UpdateOneAsync(
@@ -289,6 +338,7 @@
 			_metadataDraft.OppId = Opportunity.Id;
 			_metadataDraft.Assets = parsedAssets;
 			_metadataDraft.TechnicalChampions = technicalChampions;
+			_metadataDraft.Events = events;
 			await OnToast.InvokeAsync("Metadata saved.");
 			await OnSaved.InvokeAsync(_metadataDraft);
 		}
@@ -356,6 +406,26 @@
 	private void RemoveTechnicalChampion(TechnicalChampion champion)
 	{
 		_metadataDraft.TechnicalChampions.Remove(champion);
+	}
+
+	private void AddEvent()
+	{
+		var name = _newEventName.Trim();
+		if (string.IsNullOrWhiteSpace(name))
+		{
+			return;
+		}
+
+		_metadataDraft.Events.Add(new EventEntry { EventName = name, EventDate = _newEventDate });
+		_newEventName = string.Empty;
+		_newEventDate = DateTime.Now.Date;
+	}
+
+	private bool CanAddEvent => !string.IsNullOrWhiteSpace(_newEventName);
+
+	private void RemoveEvent(EventEntry evt)
+	{
+		_metadataDraft.Events.Remove(evt);
 	}
 
 	private void ToggleNotesPreview()

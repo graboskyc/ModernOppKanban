@@ -60,7 +60,7 @@ else
 									<h3>@opp.OppDetails.OppName</h3>
 									<h6 class="account-name">@opp.OppDetails.AccountName</h6>
 								</div>
-								<button class="metadata-button" aria-label="Open metadata for @opp.OppDetails.OppName" title="Open metadata" @onclick="() => OpenMetadataModalAsync(opp)">
+								<button class="metadata-button" aria-label="Open metadata for @opp.OppDetails.OppName" title="Open metadata" @onclick="() => HandleOpportunitySelectedAsync(opp.OppDetails)">
 									@if (opp.OppMetadata is not null)
 									{
 										<FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />

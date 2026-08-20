@@ -1,0 +1,62 @@
+.events-timeline-container {
+    background: transparent;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.events-timeline {
+    width: 100%;
+    height: auto;
+    min-height: 100px;
+    display: block;
+}
+
+.events-timeline-line {
+    stroke: var(--pico-h3-color);
+    stroke-width: 2;
+}
+
+.events-timeline-tick {
+    stroke: var(--pico-h3-color);
+    stroke-width: 1;
+}
+
+.events-timeline-point {
+    fill: var(--pico-primary);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.events-timeline-point.past {
+    opacity: 0.6;
+}
+
+.events-timeline-point.future {
+    opacity: 1;
+    stroke: var(--pico-h1-color);
+    stroke-width: 2;
+}
+
+.events-timeline-date {
+    font-size: 11px;
+    fill: var(--pico-muted-color);
+    text-anchor: middle;
+    user-select: none;
+}
+
+.events-timeline-name {
+    font-weight: bold;
+    font-size: 13px;
+    fill: var(--pico-h1-color);
+    text-anchor: middle;
+    user-select: none;
+}
+
+@media (max-width: 768px) {
+    .events-timeline-date {
+        font-size: 9px;
+    }
+
+    .events-timeline-name {
+        font-size: 11px;
+    }
+}
