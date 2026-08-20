@@ -251,10 +251,14 @@ else
 			return;
 		}
 
-		var opp = _opps.FirstOrDefault(x => x.OppDetails.Id == _selectedOpp.Id);
-		if (opp is not null)
+		foreach (var opp in _opps.Where(x => x.OppDetails.Id == _selectedOpp.Id))
 		{
 			opp.OppMetadata = metadata;
+		}
+
+		if (_selectedSearchOpp?.OppDetails.Id == _selectedOpp.Id)
+		{
+			_selectedSearchOpp.OppMetadata = metadata;
 		}
 	}
 

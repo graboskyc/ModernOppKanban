@@ -242,6 +242,7 @@
 	private bool _isSaving;
 	private bool _isPreviewingNotes;
 	private MarkupString _notesPreviewMarkup;
+	private string? _loadedOpportunityId;
 	private static readonly Markdown _markdown = new();
 
 	protected override async Task OnParametersSetAsync()
@@ -251,8 +252,14 @@
 			return;
 		}
 
+		if (_loadedOpportunityId == Opportunity.Id)
+		{
+			return;
+		}
+
 		_isLoading = true;
 		_isSaving = false;
+		_loadedOpportunityId = Opportunity.Id;
 		_metadataDraft = new OppMetadata { OppId = Opportunity.Id };
 		_newAssetName = string.Empty;
 		_newAssetLink = string.Empty;
@@ -330,17 +337,18 @@
 				.Set(x => x.Events, events)
 				.Set(x => x.MEDDPICC, _metadataDraft.MEDDPICC);
 
-			await MetadataCollection.UpdateOneAsync(
+			var savedMetadata = await MetadataCollection.FindOneAndUpdateAsync(
 				filter,
 				update,
-				new UpdateOptions { IsUpsert = true});
+				new FindOneAndUpdateOptions<OppMetadata>
+				{
+					IsUpsert = true,
+					ReturnDocument = ReturnDocument.After
+				});
 
-			_metadataDraft.OppId = Opportunity.Id;
-			_metadataDraft.Assets = parsedAssets;
-			_metadataDraft.TechnicalChampions = technicalChampions;
-			_metadataDraft.Events = events;
+			_metadataDraft = savedMetadata;
 			await OnToast.InvokeAsync("Metadata saved.");
-			await OnSaved.InvokeAsync(_metadataDraft);
+			await OnSaved.InvokeAsync(savedMetadata);
 		}
 		catch (Exception ex)
 		{
