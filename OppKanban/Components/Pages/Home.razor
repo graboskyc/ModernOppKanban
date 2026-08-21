@@ -15,11 +15,16 @@
 <h1>Opportunities</h1>
 
 <div class="kanban-page-header">
-	<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
-		@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
+	@if(!_showOnlyValidation) {
+		<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
+			@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
+		</button>
+	}
+	<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
+		@(_showOnlyValidation ? "Show all stages" : "Show only validation")
 	</button>
 
-	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="75%" />
+	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="65%" />
 
 	<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
 </div>
@@ -38,7 +43,7 @@ else if (_opps.Count == 0)
 }
 else
 {
-	<div class="kanban-board" aria-label="Opportunity pipeline">
+	<div class="kanban-board @(_showOnlyValidation ? "validation-only" : string.Empty)" aria-label="Opportunity pipeline">
 		@foreach (var stage in VisibleStages)
 		{
 			var stageOpps = FilteredOpps.Where(opp => opp.GetStageEnum() == stage).ToList();
@@ -123,6 +128,7 @@ else
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
 	private bool _showClosedStages = true;
+	private bool _showOnlyValidation;
 	private string[] _selectedCloseYears = Array.Empty<string>();
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
@@ -311,9 +317,20 @@ else
 		}
 	}
 
-	private IReadOnlyList<OpportunityStage> VisibleStages => _showClosedStages
-		? _stages
-		: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
+	private IReadOnlyList<OpportunityStage> VisibleStages
+	{
+		get
+		{
+			if (_showOnlyValidation)
+			{
+				return new[] { OpportunityStage.Validation };
+			}
+
+			return _showClosedStages
+				? _stages
+				: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
+		}
+	}
 
 	private IEnumerable<int> CloseYears => _opps
 		.Select(opp => opp.OppDetails.CloseDate.Year)
@@ -339,5 +356,10 @@ else
 	{
 		_showClosedStages = !_showClosedStages;
 		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowClosedStagesStorageKey, _showClosedStages.ToString());
+	}
+
+	private void ToggleValidationOnly()
+	{
+		_showOnlyValidation = !_showOnlyValidation;
 	}
 }

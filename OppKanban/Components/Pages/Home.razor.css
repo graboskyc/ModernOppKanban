@@ -86,6 +86,17 @@
 	padding: 0.75rem;
 }
 
+.validation-only .kanban-cards {
+	align-items: flex-start;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.validation-only .opportunity-card {
+	flex: 1 1 20rem;
+	max-width: 20rem;
+}
+
 .opportunity-card {
 	background: #ffffff;
 	border: 1px solid #e1e6ea;
