@@ -13,9 +13,10 @@ builder.Services.AddApexCharts();
 
 static void ConfigureMDBServices(IServiceCollection services)
 {
-    
-    string MDBCONNSTR = "mongodb://admin:admin@mongodb:27017";
-    var settings = MongoClientSettings.FromConnectionString(MDBCONNSTR);
+    var connectionString = Environment.GetEnvironmentVariable("MongoDb__ConnectionString")
+        ?? throw new InvalidOperationException("MongoDb__ConnectionString environment variable is required.");
+
+    var settings = MongoClientSettings.FromConnectionString(connectionString);
     settings.ServerApi = new ServerApi(ServerApiVersion.V1);
 
     services.AddSingleton<IMongoClient>(new MongoClient(settings));

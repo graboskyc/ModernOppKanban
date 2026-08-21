@@ -48,7 +48,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
-      - MongoDb__ConnectionString=mongodb://mongodb:27017/OppKanban
+      - MongoDb__ConnectionString=${MongoDb__ConnectionString:-mongodb://admin:admin@mongodb:27017/OppKanban?authSource=admin}
     depends_on:
       setup-generator:
         condition: service_completed_successfully
