@@ -91,6 +91,15 @@ public static class MongoMigrator
         }
 
         var collection = db.GetCollection<BsonDocument>(collectionName);
+        
+        // Ensure collection exists
+        var collections = await (await db.ListCollectionNamesAsync()).ToListAsync();
+        if (!collections.Contains(collectionName))
+        {
+            await db.CreateCollectionAsync(collectionName);
+            logger?.LogInformation("Created collection {Collection} for search index.", collectionName);
+        }
+
         var existing = await (await collection.SearchIndexes.ListAsync()).ToListAsync();
 
         if (existing.Any(index => index.GetValue("name", BsonNull.Value).AsNullableString() == name))
