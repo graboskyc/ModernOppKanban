@@ -30,6 +30,22 @@ namespace OppKanban.Datamodels
         public DateTime EventDate {get;set;} = DateTime.Now;
     }
 
+    public enum FeedbackType {
+        Blocker,
+        NiceToHave,
+        Expansion
+    }
+
+    [BsonIgnoreExtraElements]
+    public class FeedbackItem {
+        [BsonElement("id")]
+        public string Id { get; set; } = "";
+        [BsonElement("link")]
+        public string Link { get; set; } = "";
+        [BsonElement("type")]
+        public FeedbackType Type { get; set; } = FeedbackType.NiceToHave;
+    }
+
     [BsonIgnoreExtraElements]
     public class MEDDPICC {
         public bool MEDDPICC_M { get; set; } = false;
@@ -61,6 +77,8 @@ namespace OppKanban.Datamodels
         public List<TechnicalChampion> TechnicalChampions {get;set;} = new List<TechnicalChampion>();
         [BsonElement("events")]
         public List<EventEntry> Events {get;set;} = new List<EventEntry>();
+        [BsonElement("feedback")]
+        public List<FeedbackItem> Feedback {get;set;} = new List<FeedbackItem>();
         [BsonElement("meddpicc")]
         public MEDDPICC MEDDPICC {get;set;} = new MEDDPICC();
     }
