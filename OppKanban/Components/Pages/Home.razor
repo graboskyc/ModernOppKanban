@@ -81,6 +81,19 @@ else
 								<div class="opportunity-people">
 									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner</span>
 									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA</span>
+									@if (opp.OppMetadata?.Feedback?.Count > 0 || opp.OppMetadata?.TechnicalChampions?.Count > 0)
+									{
+										<span>
+											@if (opp.OppMetadata?.Feedback?.Count > 0)
+											{
+												<FluentIcon Value="@(new Icons.Regular.Size20.PersonFeedback())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" Title="Has Feedback" />
+											}
+											@if (opp.OppMetadata?.TechnicalChampions?.Count > 0)
+											{
+												<FluentIcon Value="@(new Icons.Regular.Size20.PeopleMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" Title="Has Technical Champion" />
+											}
+										</span>
+									}
 								</div>
 								<div>
 									<span class="opportunity-err">@opp.OppDetails.ErrRounded</span>
