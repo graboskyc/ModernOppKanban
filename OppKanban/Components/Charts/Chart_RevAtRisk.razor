@@ -1,0 +1,56 @@
+@using OppKanban.Datamodels
+@using ApexCharts
+
+<article data-theme="light">
+    @if (_data.Count == 0)
+    {
+        <p>No revenue at risk data available.</p>
+    }
+    else
+    {
+        <ApexChart TItem="RevenueAtRiskData" Title="Revenue at Risk by Feature Request" Options="_chartOptions">
+            <ApexPointSeries TItem="RevenueAtRiskData"
+                            Items="_data"
+                            Name="Revenue"
+                            SeriesType="SeriesType.Donut"
+                            XValue="item => item.Feature"
+                            YValue="item => item.Revenue" />
+        </ApexChart>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<OppView> Opportunities { get; set; } = Enumerable.Empty<OppView>();
+
+    private List<RevenueAtRiskData> _data = new();
+    private ApexChartOptions<RevenueAtRiskData> _chartOptions = new();
+
+    protected override void OnInitialized()
+    {
+        _chartOptions = new ApexChartOptions<RevenueAtRiskData>
+        {
+            Chart = new Chart { Type = ChartType.Donut },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis { Labels = new YAxisLabels { Formatter = @"function (value) { return (value / 1000).toFixed(0) + 'K'; }" } }
+            },
+            Tooltip = new Tooltip { Y = new TooltipY { Formatter = @"function (value) { return (value / 1000).toFixed(0) + 'K'; }" } }
+        };
+    }
+
+    protected override void OnParametersSet()
+    {
+        _data = Opportunities
+            .Where(o => o.OppMetadata?.Feedback != null)
+            .SelectMany(o => o.OppMetadata!.Feedback
+                .Select(f => new { o.OppDetails.Err, f.Id }))
+            .GroupBy(x => x.Id)
+            .Select(g => new RevenueAtRiskData
+            {
+                Feature = g.Key,
+                Revenue = g.Sum(x => x.Err)
+            })
+            .ToList();
+    }
+}
