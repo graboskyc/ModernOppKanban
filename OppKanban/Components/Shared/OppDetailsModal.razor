@@ -117,7 +117,7 @@
 						@foreach (var fb in Opportunity.OppMetadata.Feedback)
 						{
 							<tr>
-								<td><a href="@fb.Link" target="_blank" rel="noopener noreferrer">@fb.Type</a></td>
+								<td><a href="@fb.Link" target="_blank" rel="noopener noreferrer">@fb.Id</a> <small>(@fb.Type)</small></td>
 							</tr>
 						}
 					</tbody></table>
