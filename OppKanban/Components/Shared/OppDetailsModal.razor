@@ -109,6 +109,19 @@
 					<h3>Go Live Journey</h3>
 					<EventsTimeline Events="@Opportunity.OppMetadata.Events" />
 				}
+
+				@if (Opportunity.OppMetadata.Feedback.Count > 0)
+				{
+					<h3>Feedback</h3>
+					<table class="striped"><tbody>
+						@foreach (var fb in Opportunity.OppMetadata.Feedback)
+						{
+							<tr>
+								<td><a href="@fb.Link" target="_blank" rel="noopener noreferrer">@fb.Type</a></td>
+							</tr>
+						}
+					</tbody></table>
+				}
 			}
 		</article>
 	</dialog>

@@ -166,6 +166,42 @@
 						</table>
 					</details>
 
+					<details name="feedback">
+						<summary>Feedback <small><i>(click to toggle)</i></small></summary>
+						<label for="feedback-link">Feedback Item</label>
+						<div role="group">
+							<input id="feedback-id" type="text" placeholder="Feedback ID" @bind="_newFeedbackId" @bind:event="oninput" />
+							<input id="feedback-link" type="url" placeholder="Feedback link" @bind="_newFeedbackLink" @bind:event="oninput" />
+							<select aria-label="Feedback type" @bind="_newFeedbackType">
+								@foreach (var type in Enum.GetValues<FeedbackType>())
+								{
+									<option value="@type">@type</option>
+								}
+							</select>
+							<button type="button" @onclick="AddFeedback" disabled="@(!CanAddFeedback)">
+								<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
+							</button>
+						</div>
+
+						@if (_metadataDraft.Feedback.Count != 0)
+						{
+							<table><tbody>
+								@foreach (var fb in _metadataDraft.Feedback)
+								{
+									<tr>
+										<td><a href="@fb.Link" target="_blank" rel="noopener noreferrer">@fb.Id</a></td>
+										<td>@fb.Type</td>
+										<td width="15%">
+											<button type="button" class="secondary" style="width:100%;height:100%" @onclick="() => RemoveFeedback(fb)">
+												<FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#ffffff" />
+											</button>
+										</td>
+									</tr>
+								}
+							</tbody></table>
+						}
+					</details>
+
 					<details name="notes">
 						<summary>Notes <small><i>(click to toggle)</i></small></summary>
 					
@@ -236,6 +272,9 @@
 	private string _newTechnicalChampionName = string.Empty;
 	private string _newTechnicalChampionLink = string.Empty;
 	private TechnicalChampionStage _newTechnicalChampionStage = TechnicalChampionStage.Identify;
+	private string _newFeedbackId = string.Empty;
+	private string _newFeedbackLink = string.Empty;
+	private FeedbackType _newFeedbackType = FeedbackType.NiceToHave;
 	private string _newEventName = string.Empty;
 	private DateTime _newEventDate = DateTime.Now.Date;
 	private bool _isLoading = true;
@@ -266,8 +305,10 @@
 		_newTechnicalChampionName = string.Empty;
 		_newTechnicalChampionLink = string.Empty;
 		_newTechnicalChampionStage = TechnicalChampionStage.Identify;
+		_newFeedbackId = string.Empty;
+		_newFeedbackLink = string.Empty;
+		_newFeedbackType = FeedbackType.NiceToHave;
 		_newEventName = string.Empty;
-		_newEventDate = DateTime.Now.Date;
 		_isPreviewingNotes = true;
 
 		try
@@ -287,6 +328,7 @@
 					SaLikelihood = metadata.SaLikelihood,
 					Assets = metadata.Assets.ToList(),
 					TechnicalChampions = metadata.TechnicalChampions.ToList(),
+					Feedback = metadata.Feedback.ToList(),
 					Events = metadata.Events.ToList(),
 					MEDDPICC = metadata.MEDDPICC ?? new MEDDPICC()
 				};
@@ -334,6 +376,7 @@
 				.Set(x => x.SaLikelihood, _metadataDraft.SaLikelihood)
 				.Set(x => x.Assets, parsedAssets)
 				.Set(x => x.TechnicalChampions, technicalChampions)
+				.Set(x => x.Feedback, _metadataDraft.Feedback.ToList())
 				.Set(x => x.Events, events)
 				.Set(x => x.MEDDPICC, _metadataDraft.MEDDPICC);
 
@@ -414,6 +457,33 @@
 	private void RemoveTechnicalChampion(TechnicalChampion champion)
 	{
 		_metadataDraft.TechnicalChampions.Remove(champion);
+	}
+
+	private void AddFeedback()
+	{
+		var id = _newFeedbackId.Trim();
+		var link = _newFeedbackLink.Trim();
+		if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(link))
+		{
+			return;
+		}
+
+		_metadataDraft.Feedback.Add(new FeedbackItem
+		{
+			Id = id,
+			Link = link,
+			Type = _newFeedbackType
+		});
+		_newFeedbackId = string.Empty;
+		_newFeedbackLink = string.Empty;
+		_newFeedbackType = FeedbackType.NiceToHave;
+	}
+
+	private bool CanAddFeedback => !string.IsNullOrWhiteSpace(_newFeedbackId) && !string.IsNullOrWhiteSpace(_newFeedbackLink);
+
+	private void RemoveFeedback(FeedbackItem feedback)
+	{
+		_metadataDraft.Feedback.Remove(feedback);
 	}
 
 	private void AddEvent()
