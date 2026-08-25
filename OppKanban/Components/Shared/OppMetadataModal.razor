@@ -104,7 +104,24 @@
 				
 						<label for="technical-champion-name">Technical Champions</label>
 						<div role="group">
-							<input id="technical-champion-name" type="text" placeholder="Champion name" @bind="_newTechnicalChampionName" @bind:event="oninput" />
+							<div class="feedback-lookup">
+								<input id="technical-champion-name" type="text" placeholder="Champion name" 
+									   autocomplete="off"
+									   @bind="_newTechnicalChampionName" 
+									   @bind:event="oninput" 
+									   @bind:after="OnChampionTextChanged" />
+								@if (_filteredChampions.Count != 0)
+								{
+									<div class="feedback-suggestions" role="listbox" aria-label="Champion suggestions">
+										@foreach (var c in _filteredChampions)
+										{
+											<button type="button" class="secondary" role="option" @onclick="() => SelectChampion(c)">
+												<strong>@c.Name</strong>
+											</button>
+										}
+									</div>
+								}
+							</div>
 							<input type="url" placeholder="Champion link" @bind="_newTechnicalChampionLink" @bind:event="oninput" />
 							<select aria-label="Technical champion stage" @bind="_newTechnicalChampionStage">
 								@foreach (var stage in TechnicalChampionStageHelper.GetAllStages())
@@ -170,7 +187,24 @@
 						<summary>Feedback <small><i>(click to toggle)</i></small></summary>
 						<label for="feedback-link">Feedback Item</label>
 						<div role="group">
-							<input id="feedback-id" type="text" placeholder="Feedback ID" @bind="_newFeedbackId" @bind:event="oninput" />
+							<div class="feedback-lookup">
+								<input id="feedback-id" type="text" placeholder="Feedback ID"
+									   autocomplete="off"
+									   @bind="_newFeedbackId"
+									   @bind:event="oninput"
+									   @bind:after="OnFeedbackTextChanged" />
+								@if (_filteredFeedback.Count != 0)
+								{
+									<div class="feedback-suggestions" role="listbox" aria-label="Feedback suggestions">
+										@foreach (var fb in _filteredFeedback)
+										{
+											<button type="button" class="secondary" role="option" @onclick="() => SelectFeedback(fb)">
+												<strong>@fb.Id</strong> <small>@fb.Type</small>
+											</button>
+										}
+									</div>
+								}
+							</div>
 							<input id="feedback-link" type="url" placeholder="Feedback link" @bind="_newFeedbackLink" @bind:event="oninput" />
 							<select aria-label="Feedback type" @bind="_newFeedbackType">
 								@foreach (var type in Enum.GetValues<FeedbackType>())
@@ -283,6 +317,10 @@
 	private MarkupString _notesPreviewMarkup;
 	private string? _loadedOpportunityId;
 	private static readonly Markdown _markdown = new();
+    private List<FeedbackItem> _allExistingFeedback = new();
+    private List<FeedbackItem> _filteredFeedback = new();
+    private List<TechnicalChampion> _allExistingChampions = new();
+    private List<TechnicalChampion> _filteredChampions = new();
 
 	protected override async Task OnParametersSetAsync()
 	{
@@ -316,6 +354,30 @@
 			var metadata = await MetadataCollection
 				.Find(x => x.OppId == Opportunity.Id)
 				.FirstOrDefaultAsync();
+			var feedbackLists = await MetadataCollection
+				.Find(Builders<OppMetadata>.Filter.Empty)
+				.Project(x => x.Feedback)
+				.ToListAsync();
+            var championLists = await MetadataCollection
+                .Find(Builders<OppMetadata>.Filter.Empty)
+                .Project(x => x.TechnicalChampions)
+				.ToListAsync();
+
+			_allExistingFeedback = feedbackLists
+				.SelectMany(feedback => feedback)
+				.Where(feedback => !string.IsNullOrWhiteSpace(feedback.Id))
+				.GroupBy(feedback => feedback.Id, StringComparer.OrdinalIgnoreCase)
+				.Select(group => group.First())
+				.OrderBy(feedback => feedback.Id)
+				.ToList();
+
+            _allExistingChampions = championLists
+                .SelectMany(champions => champions)
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+				.GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(c => c.Name)
+				.ToList();
 
 			if (metadata is not null)
 			{
@@ -448,6 +510,7 @@
 		_newTechnicalChampionName = string.Empty;
 		_newTechnicalChampionLink = string.Empty;
 		_newTechnicalChampionStage = TechnicalChampionStage.Identify;
+        _filteredChampions = new();
 	}
 
 	private bool CanAddTechnicalChampion =>
@@ -459,7 +522,33 @@
 		_metadataDraft.TechnicalChampions.Remove(champion);
 	}
 
-	private void AddFeedback()
+    private void OnChampionTextChanged()
+	{
+		var searchText = _newTechnicalChampionName.Trim();
+		_filteredChampions = searchText.Length < 2
+			? new()
+			: _allExistingChampions
+				.Where(c => c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+				.Take(8)
+				.ToList();
+	}
+
+	private void SelectChampion(TechnicalChampion champion)
+	{
+		_newTechnicalChampionName = champion.Name;
+		_newTechnicalChampionLink = champion.Link;
+		_newTechnicalChampionStage = champion.Stage;
+		_filteredChampions = new();
+	}
+
+	private bool CanAddFeedback => !string.IsNullOrWhiteSpace(_newFeedbackId) && !string.IsNullOrWhiteSpace(_newFeedbackLink);
+
+	private void RemoveFeedback(FeedbackItem feedback)
+	{
+		_metadataDraft.Feedback.Remove(feedback);
+	}
+
+    private void AddFeedback()
 	{
 		var id = _newFeedbackId.Trim();
 		var link = _newFeedbackLink.Trim();
@@ -477,13 +566,26 @@
 		_newFeedbackId = string.Empty;
 		_newFeedbackLink = string.Empty;
 		_newFeedbackType = FeedbackType.NiceToHave;
+        _filteredFeedback = new();
 	}
 
-	private bool CanAddFeedback => !string.IsNullOrWhiteSpace(_newFeedbackId) && !string.IsNullOrWhiteSpace(_newFeedbackLink);
-
-	private void RemoveFeedback(FeedbackItem feedback)
+	private void OnFeedbackTextChanged()
 	{
-		_metadataDraft.Feedback.Remove(feedback);
+		var searchText = _newFeedbackId.Trim();
+		_filteredFeedback = searchText.Length < 2
+			? new()
+			: _allExistingFeedback
+				.Where(feedback => feedback.Id.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+				.Take(8)
+				.ToList();
+	}
+
+	private void SelectFeedback(FeedbackItem feedback)
+	{
+		_newFeedbackId = feedback.Id;
+		_newFeedbackLink = feedback.Link;
+		_newFeedbackType = feedback.Type;
+		_filteredFeedback = new();
 	}
 
 	private void AddEvent()
