@@ -31,7 +31,7 @@ else
                     <th>Image</th>
                     <th>Name</th>
                     <th>Title</th>
-                    <th>Open</th>
+                    <th>Info</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,6 +42,12 @@ else
                         <td>@sa.Name</td>
                         <td>@sa.Title</td>
                         <td>
+                            @if(!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
+                            {
+                                <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button" >
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.DocumentOnePage())" />
+                                </a>
+                            }
                             <button type="button" aria-label="Edit @sa.Name" title="Edit @sa.Name" @onclick="() => OpenEditModal(sa)">
                                 <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
                             </button>
