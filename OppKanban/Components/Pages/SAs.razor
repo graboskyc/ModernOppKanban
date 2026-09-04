@@ -1,0 +1,119 @@
+@page "/SAs"
+@rendermode InteractiveServer
+@using MongoDB.Driver
+@using OppKanban.Datamodels
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject IMongoCollection<SA> SACollection
+
+<PageTitle>SAs</PageTitle>
+
+<h1>Solutions Architects</h1>
+<button type="button" @onclick="OpenCreateModal">New SA</button>
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+else if (_isLoading)
+{
+    <p>Loading SAs...</p>
+}
+else if (_sas.Count == 0)
+{
+    <p>No SAs found.</p>
+}
+else
+{
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Title</th>
+                    <th>Open</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sa in _sas)
+                {
+                    <tr>
+                        <td><SAProfileImage SAId="@sa.Id" AltText="@sa.Name" /></td>
+                        <td>@sa.Name</td>
+                        <td>@sa.Title</td>
+                        <td>
+                            <button type="button" aria-label="Edit @sa.Name" title="Edit @sa.Name" @onclick="() => OpenEditModal(sa)">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<SAEditModal SA="_selectedSA" IsNew="_isCreatingSA" OnClose="CloseEditModal" OnSaved="HandleSavedSA" />
+
+@code {
+    private readonly List<SA> _sas = new();
+    private bool _isLoading = true;
+    private string _errorMessage = string.Empty;
+    private SA? _selectedSA;
+    private bool _isCreatingSA;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSAsAsync();
+    }
+
+    private async Task LoadSAsAsync()
+    {
+        _isLoading = true;
+        _errorMessage = string.Empty;
+
+        try
+        {
+            var sas = await SACollection
+                .Find(FilterDefinition<SA>.Empty)
+                .SortBy(sa => sa.Name)
+                .ToListAsync();
+
+            _sas.Clear();
+            _sas.AddRange(sas);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Unable to load SAs: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenEditModal(SA sa)
+    {
+        _isCreatingSA = false;
+        _selectedSA = sa;
+    }
+
+    private void OpenCreateModal()
+    {
+        _isCreatingSA = true;
+        _selectedSA = new SA();
+    }
+
+    private void CloseEditModal()
+    {
+        _selectedSA = null;
+        _isCreatingSA = false;
+    }
+
+    private async Task HandleSavedSA(SA savedSA)
+    {
+        await LoadSAsAsync();
+        _selectedSA = null;
+        _isCreatingSA = false;
+    }
+}

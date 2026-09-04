@@ -20,10 +20,12 @@ static void ConfigureMDBServices(IServiceCollection services)
     settings.ServerApi = new ServerApi(ServerApiVersion.V1);
 
     services.AddSingleton<IMongoClient>(new MongoClient(settings));
+    services.AddSingleton<IMongoDatabase>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban"));
     //services.AddSingleton<IMongoDatabase>(x => x.GetRequiredService<IMongoClient>().GetDatabase("dbname"));
-    services.AddSingleton<IMongoCollection<OppBase>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppBase>("opps"));    
-    services.AddSingleton<IMongoCollection<OppMetadata>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppMetadata>("metadata"));    
-    services.AddSingleton<IMongoCollection<OppView>>(x => x.GetRequiredService<IMongoClient>().GetDatabase("OppKanban").GetCollection<OppView>("v__oppsAndMetadata"));
+    services.AddSingleton<IMongoCollection<OppBase>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppBase>("opps"));    
+    services.AddSingleton<IMongoCollection<OppMetadata>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppMetadata>("metadata"));    
+    services.AddSingleton<IMongoCollection<OppView>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppView>("v__oppsAndMetadata"));
+    services.AddSingleton<IMongoCollection<SA>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<SA>("sas"));
 
 }
 

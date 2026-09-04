@@ -1,0 +1,280 @@
+@using MongoDB.Driver
+@using MongoDB.Driver.GridFS
+@using MongoDB.Bson
+@using OppKanban.Datamodels
+@using Blazor.Cropper
+@inject IMongoCollection<SA> SACollection
+@inject IMongoDatabase Database
+
+@if (SA is not null)
+{
+    <dialog open @oncancel="HandleModalCancel">
+        <article>
+            <header>
+                <button type="button" aria-label="Close" rel="prev" @onclick="CloseModalAsync"></button>
+                <p><strong>@(IsNew ? "Create SA" : "Edit SA")</strong></p>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(_errorMessage))
+            {
+                <p class="text-danger">@_errorMessage</p>
+            }
+
+            <label for="sa-name">Name</label>
+            <input id="sa-name" type="text" @bind="_draft.Name" />
+
+            <label for="sa-sfdc-name">SFDC name</label>
+            <input id="sa-sfdc-name" type="text" @bind="_draft.SfdcName" />
+
+            <label for="sa-title">Title</label>
+            <input id="sa-title" type="text" @bind="_draft.Title" />
+
+            <label for="sa-one-on-one">One-on-one document</label>
+            <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
+
+            <label for="sa-profile-image">Profile image</label>
+            <InputFile id="sa-profile-image" OnChange="HandleImageSelected" accept="image/jpeg,image/jpg,image/png" />
+            @if (_isCropping)
+            {
+                <dialog open>
+                    <article>
+                        <header>Crop profile image</header>
+                        <Cropper
+                            ImageFile="_selectedImage"
+                            PureCSharpProcessing="true"
+                            MaxCropedHeight="500"
+                            CropperHeight="400"
+                            MaxCropedWidth="500"
+                            RequireAspectRatio="true"
+                            AspectRatio="1"
+                            @ref="_cropper" />
+                        <footer>
+                            <button type="button" class="secondary" @onclick="CancelCropAsync">Cancel</button>
+                            <button type="button" @onclick="CompleteCropAsync">Use cropped image</button>
+                        </footer>
+                    </article>
+                </dialog>
+            }
+            else if (_selectedImage is not null)
+            {
+                <small>@_selectedImage.Name (cropped)</small>
+            }
+
+            <label for="sa-hire-date">Hire date</label>
+            <input id="sa-hire-date" type="date" @bind="_draft.HireDate" />
+
+            <label for="sa-last-promo-date">Last promotion date</label>
+            <input id="sa-last-promo-date" type="date" @bind="_draft.LastPromoDate" />
+
+            <label for="sa-next-promo-date">Projected next promotion date</label>
+            <input id="sa-next-promo-date" type="date" @bind="_draft.NextPromoDateProjected" />
+
+            <label for="sa-happiness">Current happiness</label>
+            <input id="sa-happiness" type="range" min="0" max="5" step="0.1" @bind="_draft.CurrentHappyiness" />
+
+            <label for="sa-si">Current SI</label>
+            <select id="sa-si" @bind="_draft.CurrentSI">
+                @foreach (var si in Enum.GetValues<SASI>())
+                {
+                    <option value="@si">@si</option>
+                }
+            </select>
+
+            <label for="sa-talent">Talent</label>
+            <select id="sa-talent" @bind="_draft.Talent">
+                @foreach (var talent in Enum.GetValues<SATalent>())
+                {
+                    <option value="@talent">@talent</option>
+                }
+            </select>
+
+            <label for="sa-risk">Risk</label>
+            <select id="sa-risk" @bind="_draft.Risk">
+                @foreach (var risk in Enum.GetValues<SARisk>())
+                {
+                    <option value="@risk">@risk</option>
+                }
+            </select>
+
+            <footer>
+                <button type="button" class="secondary" @onclick="CloseModalAsync">Cancel</button>
+                <button type="button" @onclick="SaveAsync" disabled="@_isSaving">
+                    @(_isSaving ? "Saving..." : IsNew ? "Create" : "Save")
+                </button>
+            </footer>
+        </article>
+    </dialog>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public SA? SA { get; set; }
+
+    [Parameter]
+    public bool IsNew { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback<SA> OnSaved { get; set; }
+
+    private SA _draft = new();
+    private bool _isSaving;
+    private string _errorMessage = string.Empty;
+    private MongoDB.Bson.ObjectId? _loadedSAId;
+
+    protected override void OnParametersSet()
+    {
+        if (SA is null)
+        {
+            _loadedSAId = null;
+            _selectedImage = null;
+            _croppedImage = null;
+            _isCropping = false;
+            return;
+        }
+
+        if (_loadedSAId == SA.Id)
+        {
+            return;
+        }
+
+        _loadedSAId = SA.Id;
+        _draft = new SA
+        {
+            Id = SA.Id,
+            Name = SA.Name,
+            SfdcName = SA.SfdcName,
+            LinkToOneOnOneDoc = SA.LinkToOneOnOneDoc,
+            Title = SA.Title,
+            HireDate = SA.HireDate,
+            LastPromoDate = SA.LastPromoDate,
+            NextPromoDateProjected = SA.NextPromoDateProjected,
+            CurrentHappyiness = SA.CurrentHappyiness,
+            CurrentSI = SA.CurrentSI,
+            Talent = SA.Talent,
+            Risk = SA.Risk
+        };
+        _errorMessage = string.Empty;
+        _isSaving = false;
+    }
+
+    private Task HandleModalCancel()
+    {
+        return CloseModalAsync();
+    }
+
+    private Task CloseModalAsync()
+    {
+        return OnClose.InvokeAsync();
+    }
+
+    private void HandleImageSelected(InputFileChangeEventArgs args)
+    {
+        _selectedImage = args.File;
+        _croppedImage = null;
+        _isCropping = true;
+    }
+
+    private void CancelCrop()
+    {
+        _selectedImage = null;
+        _croppedImage = null;
+        _isCropping = false;
+    }
+
+    private async Task CancelCropAsync()
+    {
+        CancelCrop();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CompleteCropAsync()
+    {
+        if (_cropper is null)
+        {
+            return;
+        }
+
+        var cropResult = await _cropper.GetCropedResult();
+        _croppedImage = await cropResult.GetDataAsync();
+        _isCropping = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (SA is null)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        _errorMessage = string.Empty;
+
+        try
+        {
+            SA? savedSA;
+            if (IsNew)
+            {
+                _draft.Id = ObjectId.GenerateNewId();
+                await SACollection.InsertOneAsync(_draft);
+                savedSA = _draft;
+            }
+            else
+            {
+                var filter = Builders<SA>.Filter.Eq(sa => sa.Id, _draft.Id);
+                var update = Builders<SA>.Update
+                    .Set(sa => sa.Name, _draft.Name)
+                    .Set(sa => sa.SfdcName, _draft.SfdcName)
+                    .Set(sa => sa.LinkToOneOnOneDoc, _draft.LinkToOneOnOneDoc)
+                    .Set(sa => sa.Title, _draft.Title)
+                    .Set(sa => sa.HireDate, _draft.HireDate)
+                    .Set(sa => sa.LastPromoDate, _draft.LastPromoDate)
+                    .Set(sa => sa.NextPromoDateProjected, _draft.NextPromoDateProjected)
+                    .Set(sa => sa.CurrentHappyiness, _draft.CurrentHappyiness)
+                    .Set(sa => sa.CurrentSI, _draft.CurrentSI)
+                    .Set(sa => sa.Talent, _draft.Talent)
+                    .Set(sa => sa.Risk, _draft.Risk);
+
+                savedSA = await SACollection.FindOneAndUpdateAsync(
+                    filter,
+                    update,
+                    new FindOneAndUpdateOptions<SA> { ReturnDocument = ReturnDocument.After });
+
+                if (savedSA is null)
+                {
+                    _errorMessage = "The SA could not be found.";
+                    return;
+                }
+            }
+
+            if (_selectedImage is not null && _croppedImage is not null)
+            {
+                var bucket = new GridFSBucket(Database);
+                await bucket.UploadFromBytesAsync(
+                    savedSA.Id.ToString(),
+                    _croppedImage,
+                    new GridFSUploadOptions
+                    {
+                        Metadata = new BsonDocument("contentType", "image/jpeg")
+                    });
+            }
+
+            await OnSaved.InvokeAsync(savedSA);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Unable to save SA: {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private Cropper? _cropper;
+    private bool _isCropping;
+    private IBrowserFile? _selectedImage;
+    private byte[]? _croppedImage;
+}

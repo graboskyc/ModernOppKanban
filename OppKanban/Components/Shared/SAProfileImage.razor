@@ -1,0 +1,47 @@
+@using MongoDB.Driver
+@using MongoDB.Driver.GridFS
+@inject IMongoDatabase Database
+
+@if (_image is not null)
+{
+    <img src="@_image" alt="@AltText" width="48" height="48" style="border-radius: 50%; object-fit: cover;" />
+}
+else
+{
+    <span aria-label="No profile image">-</span>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public MongoDB.Bson.ObjectId SAId { get; set; }
+
+    [Parameter]
+    public string AltText { get; set; } = "Profile image";
+
+    private string? _image;
+    private MongoDB.Bson.ObjectId _loadedSAId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SAId == _loadedSAId)
+        {
+            return;
+        }
+
+        _loadedSAId = SAId;
+        _image = null;
+
+        var bucket = new GridFSBucket(Database);
+        var filter = Builders<GridFSFileInfo>.Filter.Eq(file => file.Filename, SAId.ToString());
+        var options = new GridFSFindOptions { Limit = 1, Sort = Builders<GridFSFileInfo>.Sort.Descending(file => file.UploadDateTime) };
+
+        using var cursor = await bucket.FindAsync(filter, options);
+        var file = await cursor.FirstOrDefaultAsync();
+        if (file is not null)
+        {
+            var bytes = await bucket.DownloadAsBytesAsync(file.Id);
+            var contentType = file.Metadata?.GetValue("contentType", "image/jpeg").AsString ?? "image/jpeg";
+            _image = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+        }
+    }
+}
