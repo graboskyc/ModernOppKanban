@@ -1,0 +1,83 @@
+@rendermode InteractiveServer
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@using MongoDB.Bson
+@using MongoDB.Bson.Serialization.Attributes
+@inject IMongoCollection<OppView> OppCollection
+
+<div>
+	<h1>@_cutoffDays-Day Outlook</h1>
+
+	@if (!string.IsNullOrWhiteSpace(_errorMessage))
+	{
+		<p class="text-danger">@_errorMessage</p>
+	}
+	else if (_isLoading)
+	{
+		<p>Loading upcoming events...</p>
+	}
+	else if (_events.Count == 0)
+	{
+		<p>No upcoming events found.</p>
+	}
+	else
+	{
+		<EventsTimeline Events="_events" />
+	}
+</div>
+@code {
+	private readonly List<EventEntry> _events = new();
+	private bool _isLoading = true;
+	private string _errorMessage = string.Empty;
+	
+	const int _cutoffDays = 90;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var now = DateTime.UtcNow;
+			var cutoff = now.AddDays(_cutoffDays);
+
+			var results = await OppCollection.Aggregate()
+				.Unwind<OppView, UpcomingEventResult>(x => x.OppMetadata!.Events)
+				.Match(Builders<UpcomingEventResult>.Filter.And(
+					Builders<UpcomingEventResult>.Filter.Gt(x => x.OppMetadata!.Events!.EventDate, now),
+					Builders<UpcomingEventResult>.Filter.Lt(x => x.OppMetadata!.Events!.EventDate, cutoff)))
+				.ToListAsync();
+
+			_events.AddRange(results
+				.Where(r => r.OppMetadata?.Events is not null)
+				.Select(r => new EventEntry
+				{
+					EventName = $"{r.OppDetails?.OppName}: {r.OppMetadata!.Events!.EventName}",
+					EventDate = r.OppMetadata!.Events!.EventDate
+				}));
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Unable to load upcoming events: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	// shape of a document after $unwind collapses oppMetadata.events into a single subdocument
+	[BsonIgnoreExtraElements]
+	private sealed class UpcomingEventResult
+	{
+		[BsonElement("oppDetails")]
+		public OppBase? OppDetails { get; set; }
+		[BsonElement("oppMetadata")]
+		public UpcomingOppMetadata? OppMetadata { get; set; }
+	}
+
+	[BsonIgnoreExtraElements]
+	private sealed class UpcomingOppMetadata
+	{
+		[BsonElement("events")]
+		public EventEntry? Events { get; set; }
+	}
+}
