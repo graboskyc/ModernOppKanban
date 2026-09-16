@@ -28,3 +28,9 @@ Visit `http://localhost:80`
 ![](Screenshots/ss03.png)
 
 ![](Screenshots/ss04.png)
+
+![](Screenshots/ss05.png)
+
+![](Screenshots/ss06.png)
+
+![](Screenshots/ss07.png)
