@@ -19,7 +19,7 @@ namespace OppKanban.Datamodels
         public OpportunityStage GetStageEnum()
         {
             var stage = StageHelper.ParseStage(OppDetails?.Status ?? "");
-            return stage ?? OpportunityStage.Discovery;  // Default to Prospecting if parsing fails
+            return stage ?? OpportunityStage.Discover;  // Default to Prospecting if parsing fails
         }
     }
 }

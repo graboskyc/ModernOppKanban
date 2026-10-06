@@ -9,11 +9,16 @@ namespace OppKanban.Datamodels
     /// </summary>
     public enum OpportunityStage
     {
-        Discovery,
+        Engage,
+        Discover,
         Scope,
-        Validation,
-        PreOnboarding,
-        Handover,
+        TechVal,
+        BusinessJustification,
+        Negotiate,
+        SignatureReady,
+        RenewalDiscussion,
+        RenewalPlanning,
+        Proposal,
         ClosedWon,
         ClosedLost
     }
@@ -26,11 +31,16 @@ namespace OppKanban.Datamodels
         private static readonly Dictionary<OpportunityStage, (string Name, string Description)> StageLookup =
             new()
             {
-                { OpportunityStage.Discovery, ("Discovery", "Initial discovery phase") },
+                { OpportunityStage.Engage, ("Engage", "Initial discovery phase") },
+                { OpportunityStage.Discover, ("Discover", "Initial discovery phase") },
                 { OpportunityStage.Scope, ("Scope", "Scope definition and assessment") },
-                { OpportunityStage.Validation, ("Validation", "Solution validation") },
-                { OpportunityStage.PreOnboarding, ("Pre-Onboarding", "Preparing for onboarding") },
-                { OpportunityStage.Handover, ("Handover", "Handover to delivery team") },
+                { OpportunityStage.TechVal, ("Technical Validation", "Solution validation") },
+                { OpportunityStage.BusinessJustification, ("Business Justification", "Biz validation") },
+                { OpportunityStage.Negotiate, ("Negotiate", "Negotiation phase") },
+                { OpportunityStage.SignatureReady, ("Signature Ready", "Ready for signature") },
+                { OpportunityStage.RenewalDiscussion, ("Renewal Discussion", "Discussion for renewal") },
+                { OpportunityStage.RenewalPlanning, ("Renewal Planning", "Planning for renewal") },
+                { OpportunityStage.Proposal, ("Proposal", "Proposal phase") },
                 { OpportunityStage.ClosedWon, ("Closed Won", "Deal closed successfully") },
                 { OpportunityStage.ClosedLost, ("Closed Lost", "Deal lost") }
             };
@@ -52,13 +62,25 @@ namespace OppKanban.Datamodels
 
         public static OpportunityStage? ParseStage(string stageName)
         {
-            if (string.IsNullOrEmpty(stageName))
+            if (string.IsNullOrWhiteSpace(stageName))
                 return null;
 
-            if (Enum.TryParse<OpportunityStage>(stageName, ignoreCase: true, out var result))
-                return result;
+            var normalizedName = NormalizeStageName(stageName);
+            foreach (var (stage, info) in StageLookup)
+            {
+                if (string.Equals(normalizedName, NormalizeStageName(stage.ToString()), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalizedName, NormalizeStageName(info.Name), StringComparison.OrdinalIgnoreCase))
+                {
+                    return stage;
+                }
+            }
 
             return null;
+        }
+
+        private static string NormalizeStageName(string stageName)
+        {
+            return string.Concat(stageName.Where(character => !char.IsWhiteSpace(character)));
         }
     }
 }

@@ -19,6 +19,9 @@
 		<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
 			@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
 		</button>
+		<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
+			@(_showRenewalStages ? "Hide renewals" : "Show renewals")
+		</button>
 	}
 	<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
 		@(_showOnlyValidation ? "Show all stages" : "Show only validation")
@@ -139,8 +142,10 @@ else
 	private readonly List<OppView> _opps = new();
 	private readonly IReadOnlyList<OpportunityStage> _stages = StageHelper.GetAllStages();
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
+	private const string ShowRenewalStagesStorageKey = "opp-kanban:show-renewal-stages";
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
 	private bool _showClosedStages = true;
+	private bool _showRenewalStages = true;
 	private bool _showOnlyValidation;
 	private string[] _selectedCloseYears = Array.Empty<string>();
 	private OppBase? _selectedOpp;
@@ -166,6 +171,12 @@ else
 		if (bool.TryParse(storedValue, out var showClosedStages))
 		{
 			_showClosedStages = showClosedStages;
+		}
+
+		var storedRenewalValue = await JS.InvokeAsync<string?>("oppFilterStorage.getValue", ShowRenewalStagesStorageKey);
+		if (bool.TryParse(storedRenewalValue, out var showRenewalStages))
+		{
+			_showRenewalStages = showRenewalStages;
 		}
 
 		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
@@ -336,12 +347,13 @@ else
 		{
 			if (_showOnlyValidation)
 			{
-				return new[] { OpportunityStage.Validation };
+				return new[] { OpportunityStage.TechVal };
 			}
 
-			return _showClosedStages
-				? _stages
-				: _stages.Where(stage => stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost).ToList();
+			return _stages
+				.Where(stage => _showClosedStages || stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost)
+				.Where(stage => _showRenewalStages || stage is not OpportunityStage.RenewalDiscussion and not OpportunityStage.RenewalPlanning and not OpportunityStage.Proposal)
+				.ToList();
 		}
 	}
 
@@ -369,6 +381,12 @@ else
 	{
 		_showClosedStages = !_showClosedStages;
 		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowClosedStagesStorageKey, _showClosedStages.ToString());
+	}
+
+	private async Task ToggleRenewalStages()
+	{
+		_showRenewalStages = !_showRenewalStages;
+		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowRenewalStagesStorageKey, _showRenewalStages.ToString());
 	}
 
 	private void ToggleValidationOnly()
