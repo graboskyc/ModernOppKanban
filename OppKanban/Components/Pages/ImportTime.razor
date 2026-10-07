@@ -151,6 +151,7 @@
 
             if (events.Count > 0)
             {
+                await CalendarEventCollection.DeleteManyAsync(FilterDefinition<CalendarEvent>.Empty);
                 await CalendarEventCollection.InsertManyAsync(events);
                 _statusMessage = $"Imported {events.Count} time-tracking record{(events.Count == 1 ? "" : "s")} successfully.";
                 _statusClass = _errors.Count > 0 ? "text-warning" : "text-success";
