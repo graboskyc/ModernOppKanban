@@ -39,7 +39,13 @@ else
                 {
                     <tr>
                         <td><SAProfileImage SAId="@sa.Id" AltText="@sa.Name" /></td>
-                        <td>@sa.Name</td>
+                        <td>
+                            <span>@sa.Name</span>
+                            @if (IsStartDateCelebrationPeriod(sa))
+                            {
+                                <span title="Anniversary Date: @sa.HireDate.ToShortDateString()"> 🎉</span>
+                            }
+                        </td>
                         <td>@sa.Title</td>
                         <td>
                             @if(!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
@@ -121,5 +127,26 @@ else
         await LoadSAsAsync();
         _selectedSA = null;
         _isCreatingSA = false;
+    }
+
+    private static bool IsStartDateCelebrationPeriod(SA sa)
+    {
+        var today = DateTime.Today;
+        var startDate = sa.HireDate;
+
+        for (var year = today.Year - 1; year <= today.Year + 1; year++)
+        {
+            var anniversary = new DateTime(
+                year,
+                startDate.Month,
+                Math.Min(startDate.Day, DateTime.DaysInMonth(year, startDate.Month)));
+
+            if (today >= anniversary.AddDays(-14) && today <= anniversary.AddDays(7))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
