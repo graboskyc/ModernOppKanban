@@ -34,6 +34,8 @@ namespace OppKanban.Datamodels
         public ObjectId Id {get;set;}
         [BsonElement("name")]
         public string Name {get;set;} = "";
+        [BsonElement("email")]
+        public string Email {get;set;} = "";
         [BsonElement("sfdcName")]
         public string SfdcName {get;set;} = "";
         [BsonElement("linkToOneOnOneDoc")]

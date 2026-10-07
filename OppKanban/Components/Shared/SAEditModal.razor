@@ -23,6 +23,9 @@
             <label for="sa-name">Name</label>
             <input id="sa-name" type="text" @bind="_draft.Name" />
 
+            <label for="sa-email">Email address</label>
+            <input id="sa-email" type="email" @bind="_draft.Email" />
+
             <label for="sa-sfdc-name">SFDC name</label>
             <input id="sa-sfdc-name" type="text" @bind="_draft.SfdcName" />
 
@@ -145,6 +148,7 @@
         {
             Id = SA.Id,
             Name = SA.Name,
+            Email = SA.Email,
             SfdcName = SA.SfdcName,
             LinkToOneOnOneDoc = SA.LinkToOneOnOneDoc,
             Title = SA.Title,
@@ -226,6 +230,7 @@
                 var filter = Builders<SA>.Filter.Eq(sa => sa.Id, _draft.Id);
                 var update = Builders<SA>.Update
                     .Set(sa => sa.Name, _draft.Name)
+                    .Set(sa => sa.Email, _draft.Email)
                     .Set(sa => sa.SfdcName, _draft.SfdcName)
                     .Set(sa => sa.LinkToOneOnOneDoc, _draft.LinkToOneOnOneDoc)
                     .Set(sa => sa.Title, _draft.Title)
