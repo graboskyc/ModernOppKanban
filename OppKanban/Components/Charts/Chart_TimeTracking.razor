@@ -1,0 +1,152 @@
+
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@inject IMongoCollection<CalendarEvent> CalendarEventCollection
+
+<article data-theme="light">
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <p class="text-danger">@_errorMessage</p>
+    }
+    else if (_isLoading)
+    {
+        <p>Loading calendar event hours...</p>
+    }
+    else if (_customerFacingHours.Count == 0 && _nonCustomerFacingHours.Count == 0)
+    {
+        <p>No calendar events found.</p>
+    }
+    else
+    {
+        <ApexChart TItem="FirstNameDuration" Title="@ChartTitle" Options="_chartOptions">
+            <ApexPointSeries TItem="FirstNameDuration"
+                             Items="_customerFacingHours"
+                             Name="Customer-facing"
+                             SeriesType="SeriesType.Bar"
+                             XValue="item => item.FirstName"
+                             YValue="item => item.DurationHours" />
+            <ApexPointSeries TItem="FirstNameDuration"
+                             Items="_nonCustomerFacingHours"
+                             Name="Non-customer-facing"
+                             SeriesType="SeriesType.Bar"
+                             XValue="item => item.FirstName"
+                             YValue="item => item.DurationHours" />
+        </ApexChart>
+    }
+ </article>
+
+@code {
+	[Parameter]
+    // valid options are "LastBusinessWeek", "LastMonth", and "ProjectedNextWeek"
+    // LastBusinessWeek: Monday to Friday of the previous week
+    // LastMonth: 30 days prior to today
+    // ProjectedNextWeek: Monday to Friday of the next week
+    public string ChartType { get; set; } = "LastBusinessWeek";
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public double? MaxXValue { get; set; }
+
+    private readonly List<FirstNameDuration> _customerFacingHours = new();
+    private readonly List<FirstNameDuration> _nonCustomerFacingHours = new();
+    private readonly ApexChartOptions<FirstNameDuration> _chartOptions = new()
+    {
+        Chart = new Chart
+        {
+            Type = ApexCharts.ChartType.Bar,
+            Stacked = true,
+            Height = 500
+        },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar { Horizontal = true }
+        },
+        Xaxis = new XAxis
+        {
+            Title = new AxisTitle { Text = "Duration (hours)" }
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis { Title = new AxisTitle { Text = "First name" } }
+        },
+        Legend = new Legend { Show = true }
+    };
+    private bool _isLoading = true;
+    private string _errorMessage = string.Empty;
+    private string ChartTitle => string.IsNullOrWhiteSpace(Title)
+        ? "Calendar event hours by first name"
+        : Title;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _customerFacingHours.Clear();
+        _nonCustomerFacingHours.Clear();
+        _isLoading = true;
+        _errorMessage = string.Empty;
+        _chartOptions.Xaxis!.Max = MaxXValue;
+
+        try
+        {
+            var (startDate, endDate) = GetDateRange(ChartType);
+            var filter = Builders<CalendarEvent>.Filter.Gte(calendarEvent => calendarEvent.StartTime, startDate)
+                & Builders<CalendarEvent>.Filter.Lt(calendarEvent => calendarEvent.StartTime, endDate);
+            var events = await CalendarEventCollection
+                .Find(filter)
+                .ToListAsync();
+
+            var firstNameGroups = events
+                .GroupBy(calendarEvent => NormalizeFirstName(calendarEvent.FirstName), StringComparer.OrdinalIgnoreCase)
+                .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var firstNameGroup in firstNameGroups)
+            {
+                _customerFacingHours.Add(new FirstNameDuration(
+                    firstNameGroup.Key,
+                    firstNameGroup.Where(calendarEvent => calendarEvent.CustomerFacing)
+                        .Sum(calendarEvent => calendarEvent.DurationHours)));
+                _nonCustomerFacingHours.Add(new FirstNameDuration(
+                    firstNameGroup.Key,
+                    firstNameGroup.Where(calendarEvent => !calendarEvent.CustomerFacing)
+                        .Sum(calendarEvent => calendarEvent.DurationHours)));
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Unable to load calendar event hours for '{ChartType}': {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static (DateTime StartDate, DateTime EndDate) GetDateRange(string chartType)
+    {
+        var today = DateTime.Today;
+        var daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;
+        var currentWeekMonday = today.AddDays(-daysSinceMonday);
+
+        return chartType switch
+        {
+            "LastBusinessWeek" => (
+                currentWeekMonday.AddDays(-7),
+                currentWeekMonday.AddDays(-2)),
+            "LastMonth" => (
+                today.AddDays(-30),
+                today.AddDays(1)),
+            "ProjectedNextWeek" => (
+                currentWeekMonday.AddDays(7),
+                currentWeekMonday.AddDays(12)),
+            _ => throw new ArgumentException(
+                $"Unsupported chart type '{chartType}'. Valid options are LastBusinessWeek, LastMonth, and ProjectedNextWeek.",
+                nameof(chartType))
+        };
+    }
+
+    private static string NormalizeFirstName(string? firstName) =>
+        string.IsNullOrWhiteSpace(firstName) ? "Unknown" : firstName.Trim();
+
+    private sealed record FirstNameDuration(string FirstName, decimal DurationHours);
+}

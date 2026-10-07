@@ -26,5 +26,22 @@ namespace OppKanban.Datamodels
 
         [BsonElement("date")]
         public string Date { get; set; } = "";
+
+        public string FirstName { 
+            get
+            {
+                if (string.IsNullOrEmpty(Email))
+                    return "";
+                var parts = Email.Split('@');
+                if (parts.Length > 0) {
+                    var parts2 = parts[0].Split('.');
+                    if (parts2.Length > 0) {
+                        return parts2[0];
+                    }
+                    return parts[0];
+                }
+                return "";
+            }
+        }
     }
 }
