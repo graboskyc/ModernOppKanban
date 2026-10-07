@@ -26,6 +26,7 @@ static void ConfigureMDBServices(IServiceCollection services)
     services.AddSingleton<IMongoCollection<OppMetadata>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppMetadata>("metadata"));    
     services.AddSingleton<IMongoCollection<OppView>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppView>("v__oppsAndMetadata"));
     services.AddSingleton<IMongoCollection<SA>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<SA>("sas"));
+    services.AddSingleton<IMongoCollection<CalendarEvent>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<CalendarEvent>("calendar_events"));
 
 }
 

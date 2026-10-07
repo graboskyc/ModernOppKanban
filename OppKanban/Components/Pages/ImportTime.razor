@@ -1,0 +1,253 @@
+@page "/ImportTime"
+@rendermode InteractiveServer
+@using System.Globalization
+@using System.Text
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@inject IMongoCollection<CalendarEvent> CalendarEventCollection
+
+<PageTitle>Import Time Tracking</PageTitle>
+
+<h1>Import Time Tracking</h1>
+
+<p>Upload a CSV file with columns: <code>Email,Start Time ,End Time,DurationMin,DurationHours,cf,Date</code></p>
+
+<InputFile OnChange="HandleFileSelected" accept=".csv" />
+
+@if (!string.IsNullOrEmpty(_statusMessage))
+{
+    <p class="@_statusClass">@_statusMessage</p>
+}
+
+@if (_errors.Count > 0)
+{
+    <details>
+        <summary>Errors (@_errors.Count)</summary>
+        <ul>
+            @foreach (var err in _errors)
+            {
+                <li>@err</li>
+            }
+        </ul>
+    </details>
+}
+
+@code {
+    private string _statusMessage = string.Empty;
+    private string _statusClass = string.Empty;
+    private List<string> _errors = new();
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _statusMessage = string.Empty;
+        _statusClass = string.Empty;
+        _errors.Clear();
+
+        try
+        {
+            using var stream = e.File.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var content = await reader.ReadToEndAsync();
+            var records = ParseCsvRecords(content);
+
+            if (records.Count == 0)
+            {
+                _statusMessage = "The CSV file is empty.";
+                _statusClass = "text-warning";
+                return;
+            }
+
+            var headerIndexes = records[0]
+                .Select((header, index) => new { Name = NormalizeHeader(header), Index = index })
+                .Where(header => !string.IsNullOrEmpty(header.Name))
+                .GroupBy(header => header.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First().Index, StringComparer.OrdinalIgnoreCase);
+
+            var requiredHeaders = new[]
+            {
+                "Email", "StartTime", "EndTime", "DurationMin", "DurationHours", "cf", "Date"
+            };
+            var missingHeaders = requiredHeaders
+                .Where(header => !headerIndexes.ContainsKey(header))
+                .ToList();
+
+            if (missingHeaders.Count > 0)
+            {
+                _errors.Add($"Missing required column(s): {string.Join(", ", missingHeaders)}.");
+                _statusMessage = "The CSV header is invalid.";
+                _statusClass = "text-danger";
+                return;
+            }
+
+            var events = new List<CalendarEvent>();
+            for (var recordIndex = 1; recordIndex < records.Count; recordIndex++)
+            {
+                var parts = records[recordIndex];
+                var lineNumber = recordIndex + 1;
+
+                if (parts.All(string.IsNullOrWhiteSpace))
+                {
+                    continue;
+                }
+
+                var largestRequiredIndex = headerIndexes.Values.Max();
+                if (parts.Length <= largestRequiredIndex)
+                {
+                    _errors.Add($"Line {lineNumber}: expected at least {largestRequiredIndex + 1} columns, got {parts.Length}.");
+                    continue;
+                }
+
+                string GetValue(string header) => parts[headerIndexes[header]].Trim();
+
+                var email = GetValue("Email");
+                var startTimeText = GetValue("StartTime");
+                var endTimeText = GetValue("EndTime");
+                var durationMinText = GetValue("DurationMin");
+                var durationHoursText = GetValue("DurationHours");
+                var cfText = GetValue("cf");
+                var dateText = GetValue("Date");
+
+                if (!DateTime.TryParse(startTimeText, CultureInfo.InvariantCulture, DateTimeStyles.None, out var startTime))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid Start Time '{startTimeText}'.");
+                    continue;
+                }
+
+                if (!DateTime.TryParse(endTimeText, CultureInfo.InvariantCulture, DateTimeStyles.None, out var endTime))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid End Time '{endTimeText}'.");
+                    continue;
+                }
+
+                if (!decimal.TryParse(durationMinText, NumberStyles.Number, CultureInfo.InvariantCulture, out var durationMin))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid DurationMin '{durationMinText}'.");
+                    continue;
+                }
+
+                if (!decimal.TryParse(durationHoursText, NumberStyles.Number, CultureInfo.InvariantCulture, out var durationHours))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid DurationHours '{durationHoursText}'.");
+                    continue;
+                }
+
+                if (!bool.TryParse(cfText, out var cf))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid cf value '{cfText}'. Expected TRUE or FALSE.");
+                    continue;
+                }
+
+                events.Add(new CalendarEvent
+                {
+                    Email = email,
+                    StartTime = startTime,
+                    EndTime = endTime,
+                    DurationMin = durationMin,
+                    DurationHours = durationHours,
+                    CustomerFacing = cf,
+                    Date = dateText
+                });
+            }
+
+            if (events.Count > 0)
+            {
+                await CalendarEventCollection.InsertManyAsync(events);
+                _statusMessage = $"Imported {events.Count} time-tracking record{(events.Count == 1 ? "" : "s")} successfully.";
+                _statusClass = _errors.Count > 0 ? "text-warning" : "text-success";
+            }
+            else
+            {
+                _statusMessage = "No valid records found to import.";
+                _statusClass = "text-warning";
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Error: {ex.Message}";
+            _statusClass = "text-danger";
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private static string NormalizeHeader(string header) =>
+        new(header.Trim().TrimStart('\uFEFF').Where(character => !char.IsWhiteSpace(character)).ToArray());
+
+    private static List<string[]> ParseCsvRecords(string content)
+    {
+        var records = new List<string[]>();
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return records;
+        }
+
+        var fields = new List<string>();
+        var currentField = new StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < content.Length; i++)
+        {
+            var ch = content[i];
+
+            if (ch == '"')
+            {
+                if (inQuotes && i + 1 < content.Length && content[i + 1] == '"')
+                {
+                    currentField.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+
+                continue;
+            }
+
+            if (ch == ',' && !inQuotes)
+            {
+                fields.Add(currentField.ToString());
+                currentField.Clear();
+                continue;
+            }
+
+            if ((ch == '\r' || ch == '\n') && !inQuotes)
+            {
+                if (ch == '\r' && i + 1 < content.Length && content[i + 1] == '\n')
+                {
+                    i++;
+                }
+
+                fields.Add(currentField.ToString());
+                if (!fields.All(string.IsNullOrWhiteSpace))
+                {
+                    records.Add(fields.ToArray());
+                }
+
+                fields.Clear();
+                currentField.Clear();
+                continue;
+            }
+
+            currentField.Append(ch);
+        }
+
+        if (inQuotes)
+        {
+            throw new FormatException("The CSV file contains an unterminated quoted field.");
+        }
+
+        if (currentField.Length > 0 || fields.Count > 0)
+        {
+            fields.Add(currentField.ToString());
+            if (!fields.All(string.IsNullOrWhiteSpace))
+            {
+                records.Add(fields.ToArray());
+            }
+        }
+
+        return records;
+    }
+}
