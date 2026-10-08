@@ -14,8 +14,12 @@ namespace OppKanban.Datamodels
         public string OppName {get;set;}
         [BsonElement("opportunityOwner")]
         public string OpportunityOwner {get;set;}
+        [BsonIgnore]
+        public string OpportunityOwnerLastName => GetLastName(OpportunityOwner);
         [BsonElement("primarySA")]
         public string PrimarySA {get;set;}
+        [BsonIgnore]
+        public string PrimarySALastName => GetLastName(PrimarySA);
         [BsonElement("status")]
         public string Status {get;set;}
         [BsonElement("createdDate")]
@@ -47,5 +51,7 @@ namespace OppKanban.Datamodels
             }
         }
 
+        private static string GetLastName(string? fullName) =>
+            fullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
     }
 }

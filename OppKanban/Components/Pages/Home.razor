@@ -82,8 +82,8 @@ else
 
 							<div class="grid" style="margin-bottom:.9rem">
 								<div class="opportunity-people">
-									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwner</span>
-									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySA</span>
+									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.OpportunityOwnerLastName</span>
+									<span><FluentIcon Value="@(new Icons.Regular.Size20.PersonSupport())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /> @opp.OppDetails.PrimarySALastName</span>
 									@if (opp.OppMetadata?.Feedback?.Count > 0 || opp.OppMetadata?.TechnicalChampions?.Count > 0)
 									{
 										<span>
