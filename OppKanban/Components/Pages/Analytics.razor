@@ -28,8 +28,8 @@ else if (_opportunities.Count == 0)
 else
 {
 	<div class="grid">
-		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
-		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="false" />
+		<Chart_OppOwnership @key="OwnershipChartKey(true)" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
+		<Chart_OppOwnership @key="OwnershipChartKey(false)" Opportunities="FilteredOpportunities" ExcludeClosed="false" />
 	</div>
 	
 	<div class="grid">
@@ -61,7 +61,7 @@ else
 	private bool _isLoading = true;
 	private string _errorMessage = string.Empty;
 	private string StageChartKey => $"stage-{_chartsRenderVersion}";
-	private string OwnershipChartKey => $"ownership-{_chartsRenderVersion}";
+	private string OwnershipChartKey(bool excludeClosed) => $"ownership-{excludeClosed}-{_chartsRenderVersion}";
 	private string WinLossChartKey => $"winloss-{_chartsRenderVersion}";
 
 	private IEnumerable<int> CloseYears => _opportunities
