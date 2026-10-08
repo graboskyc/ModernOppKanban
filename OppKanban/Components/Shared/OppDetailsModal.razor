@@ -2,6 +2,7 @@
 @using System.Linq
 @using Microsoft.FluentUI.AspNetCore.Components;
 @using HeyRed.MarkdownSharp;
+@inject IConfigSettings AppConfig
 
 @if (Opportunity is not null)
 {
@@ -12,6 +13,7 @@
 				<p>
 					<strong>Opportunity Details</strong>&nbsp;
 					<button type="button" class="secondary" aria-label="Edit metadata" title="Edit metadata" @onclick="EditOpportunityAsync" style="font-size: 10px;padding: 5px;">Edit</button>
+					<a href="@($"{AppConfig.SFDCLink}/lightning/r/Opportunity/{Opportunity.OppDetails.Id}/view")" target="_blank" rel="noopener noreferrer" role="button" class="secondary" aria-label="View in Salesforce" title="View in Salesforce" style="font-size: 10px;padding: 5px;">View in SFDC</a>
 				</p>
 			</header>
 

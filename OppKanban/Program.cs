@@ -27,12 +27,33 @@ static void ConfigureMDBServices(IServiceCollection services)
     services.AddSingleton<IMongoCollection<OppView>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<OppView>("v__oppsAndMetadata"));
     services.AddSingleton<IMongoCollection<SA>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<SA>("sas"));
     services.AddSingleton<IMongoCollection<CalendarEvent>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<CalendarEvent>("calendar_events"));
+    services.AddSingleton<IMongoCollection<ConfigSettings>>(x => x.GetRequiredService<IMongoDatabase>().GetCollection<ConfigSettings>("config"));
+    services.AddSingleton<IConfigSettings>(x =>
+    {
+        var collection = x.GetRequiredService<IMongoCollection<ConfigSettings>>();
+        var latestSettings = collection
+            .Find(Builders<ConfigSettings>.Filter.Empty)
+            .SortByDescending(settings => settings.LastEditTime)
+            .FirstOrDefault();
+
+        if (latestSettings is not null)
+        {
+            return latestSettings;
+        }
+
+        var defaultSettings = new ConfigSettings();
+        collection.InsertOne(defaultSettings);
+        return defaultSettings;
+    });
 
 }
 
 ConfigureMDBServices(builder.Services);
 
 var app = builder.Build();
+
+// Load persisted configuration and create defaults before the app starts serving requests.
+_ = app.Services.GetRequiredService<IConfigSettings>();
 
 // Apply the view / search index definitions declared in the Migrations folder
 using (var scope = app.Services.CreateScope())

@@ -1,0 +1,67 @@
+@page "/Config"
+@rendermode InteractiveServer
+@using OppKanban.Datamodels
+@using MongoDB.Driver
+@inject IConfigSettings ConfigSettings
+@inject IMongoCollection<ConfigSettings> ConfigCollection
+
+<PageTitle>Config Settings</PageTitle>
+
+<h1>Config Settings</h1>
+
+<EditForm Model="_draft" OnValidSubmit="SaveAsync">
+    <div>
+        <label for="sfdc-link">Salesforce link</label>
+        <InputText id="sfdc-link" type="url" @bind-Value="_draft.SFDCLink" />
+    </div>
+    <p>Last edited: @_draft.LastEditTime.ToLocalTime().ToString("g")</p>
+    <button type="submit" disabled="@_isSaving">
+        @(_isSaving ? "Saving..." : "Save")
+    </button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <p class="@_statusClass">@_statusMessage</p>
+}
+
+@code {
+    private readonly ConfigSettings _draft = new();
+    private bool _isSaving;
+    private string _statusMessage = string.Empty;
+    private string _statusClass = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _draft.SFDCLink = ConfigSettings.SFDCLink;
+        _draft.LastEditTime = ConfigSettings.LastEditTime;
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+        _statusMessage = string.Empty;
+        _statusClass = string.Empty;
+
+        try
+        {
+            _draft.LastEditTime = DateTime.UtcNow;
+            await ConfigCollection.InsertOneAsync(_draft);
+
+            ConfigSettings.SFDCLink = _draft.SFDCLink;
+            ConfigSettings.LastEditTime = _draft.LastEditTime;
+
+            _statusMessage = "Configuration saved successfully.";
+            _statusClass = "text-success";
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Unable to save configuration: {ex.Message}";
+            _statusClass = "text-danger";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}
