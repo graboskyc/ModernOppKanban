@@ -7,7 +7,7 @@
     }
     else
     {
-        <ApexChart TItem="OwnerCount" Title="Opportunities by SA and account owner" Options="_options">
+        <ApexChart TItem="OwnerCount" Title="@_chartTitle" Options="_options">
             @foreach (var saGroup in _ownerCounts.GroupBy(owner => owner.Sa).OrderBy(group => group.Key))
             {
                 <ApexPointSeries TItem="OwnerCount"
@@ -25,6 +25,9 @@
     [Parameter]
     public IEnumerable<OppView> Opportunities { get; set; } = Enumerable.Empty<OppView>();
 
+    [Parameter]
+    public bool ExcludeClosed { get; set; }
+
     private readonly List<OwnerCount> _ownerCounts = new();
 
     private readonly ApexChartOptions<OwnerCount> _options = new()
@@ -33,11 +36,22 @@
         Legend = new Legend { Show = true }
     };
 
+    string _chartTitle = "All Opportunities by SA and Account Owner";
+
     protected override void OnParametersSet()
     {
         _ownerCounts.Clear();
-        _ownerCounts.AddRange(Opportunities
-                .Where(opportunity => opportunity.OppDetails is not null)
+        var opportunities = Opportunities
+                .Where(opportunity => opportunity.OppDetails is not null);
+
+        if (ExcludeClosed)
+        {
+            opportunities = opportunities.Where(opportunity =>
+                opportunity.GetStageEnum() is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost);
+            _chartTitle = "Open Opportunities by SA and Account Owner";
+        }
+
+        _ownerCounts.AddRange(opportunities
                 .GroupBy(opportunity => new
                 {
                     Sa = DisplayName(opportunity.OppDetails!.PrimarySA, "Unassigned SA"),

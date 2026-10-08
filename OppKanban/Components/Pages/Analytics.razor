@@ -28,8 +28,12 @@ else if (_opportunities.Count == 0)
 else
 {
 	<div class="grid">
+		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
+		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="false" />
+	</div>
+	
+	<div class="grid">
 		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
-		<Chart_OppOwnership @key="OwnershipChartKey" Opportunities="FilteredOpportunities" />
 	</div>
 
 	<div class="grid">
