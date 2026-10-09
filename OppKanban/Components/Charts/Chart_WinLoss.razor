@@ -1,4 +1,5 @@
 @using OppKanban.Datamodels
+@inject IConfigSettings AppConfig
 
 <article data-theme="light">
 	@if (ClosedCount == 0)
@@ -55,8 +56,11 @@
 	protected override void OnParametersSet()
 	{
 		_winRates.Clear();
-		_wonCount = Opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedWon);
-		_lostCount = Opportunities.Count(opportunity => opportunity.GetStageEnum() == OpportunityStage.ClosedLost);
+		var stages = StageHelper.GetAllStages(AppConfig);
+		_wonCount = Opportunities.Count(opportunity =>
+			stages.Any(stage => stage.IsWonStage && StageHelper.IsSameStage(opportunity.GetStageName(), stage)));
+		_lostCount = Opportunities.Count(opportunity =>
+			stages.Any(stage => stage.IsClosedLostStage && StageHelper.IsSameStage(opportunity.GetStageName(), stage)));
 
 		if (ClosedCount > 0)
 		{

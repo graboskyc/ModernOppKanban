@@ -1,4 +1,5 @@
 @using OppKanban.Datamodels
+@inject IConfigSettings AppConfig
 
 <article data-theme="light">
     @if (_ownerCounts.Count == 0)
@@ -46,8 +47,11 @@
 
         if (ExcludeClosed)
         {
+            var closedStages = StageHelper.GetAllStages(AppConfig)
+                .Where(stage => stage.IsWonStage || stage.IsClosedLostStage)
+                .ToList();
             opportunities = opportunities.Where(opportunity =>
-                opportunity.GetStageEnum() is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost);
+                !closedStages.Any(stage => StageHelper.IsSameStage(opportunity.GetStageName(), stage)));
             _chartTitle = "Open Opportunities by SA and Account Owner";
         }
 

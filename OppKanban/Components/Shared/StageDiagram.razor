@@ -1,6 +1,7 @@
 @using OppKanban.Datamodels
 @using System.Collections.Generic
 @using System.Linq
+@inject IConfigSettings AppConfig
 
 <div class="stage-diagram-container" style="width: @Width; height: @Height;">
     <svg class="stage-diagram" viewBox="0 50 @GetViewBoxWidth() 150" preserveAspectRatio="xMinYMin meet">
@@ -16,13 +17,14 @@
         @for (int i = 0; i < DiagramStages.Count; i++)
         {
             var stage = DiagramStages[i];
-            var isTerminalStage = stage == OpportunityStage.ClosedWon;
-            var isCurrentStage = stage == CurrentStage ||
-                (isTerminalStage && (CurrentStage == OpportunityStage.ClosedWon || CurrentStage == OpportunityStage.ClosedLost));
-            var isFutureStage = !isCurrentStage && AllStages.IndexOf(stage) > AllStages.IndexOf(CurrentStage);
+            var isTerminalStage = stage.IsWonStage;
+            var isCurrentStage = StageHelper.IsSameStage(CurrentStage, stage) ||
+                (isTerminalStage && IsClosedLostCurrentStage);
+            var currentStageIndex = AllStages.FindIndex(item => StageHelper.IsSameStage(CurrentStage, item));
+            var isFutureStage = !isCurrentStage && currentStageIndex >= 0 && AllStages.IndexOf(stage) > currentStageIndex;
             var x = GetCircleX(i);
             var terminalClass = isCurrentStage && isTerminalStage
-                ? (CurrentStage == OpportunityStage.ClosedWon ? "closed-won" : "closed-lost")
+                ? (IsClosedLostCurrentStage ? "closed-lost" : "closed-won")
                 : "";
             
             <circle 
@@ -30,14 +32,14 @@
                 cy="75" 
                 r="@(isCurrentStage ? 22 : 18)" 
                 class="stage-circle @(isCurrentStage ? "active" : "") @(isFutureStage ? "future" : "") @terminalClass"
-                title="@(isTerminalStage ? StageHelper.GetStageName(CurrentStage) : StageHelper.GetStageName(stage))" />
+                title="@(isTerminalStage && IsClosedLostCurrentStage ? CurrentStage : StageHelper.GetStageName(stage))" />
         }
     </svg>
 </div>
 
 @code {
     [Parameter]
-    public OpportunityStage CurrentStage { get; set; } = OpportunityStage.Discover;
+    public string CurrentStage { get; set; } = string.Empty;
 
     [Parameter]
     public string Width { get; set; } = "100%";
@@ -45,15 +47,18 @@
     [Parameter]
     public string Height { get; set; } = "auto";
 
-    private List<OpportunityStage> AllStages = new();
+    private List<ConfigSettingSalesStage> AllStages = new();
 
-    private List<OpportunityStage> DiagramStages = new();
+    private List<ConfigSettingSalesStage> DiagramStages = new();
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
-        AllStages = StageHelper.GetAllStages();
-        DiagramStages = AllStages.Take(AllStages.Count - 1).ToList();
+        AllStages = StageHelper.GetAllStages(AppConfig).ToList();
+        DiagramStages = AllStages.Where(stage => !stage.IsClosedLostStage).ToList();
     }
+
+    private bool IsClosedLostCurrentStage =>
+        AllStages.Any(stage => stage.IsClosedLostStage && StageHelper.IsSameStage(CurrentStage, stage));
 
     private double GetCircleX(int index)
     {
@@ -68,4 +73,3 @@
         return Math.Max(300, DiagramStages.Count() * 70);
     }
 }
-

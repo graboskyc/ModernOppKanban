@@ -14,6 +14,32 @@
         <label for="sfdc-link">Salesforce link</label>
         <InputText id="sfdc-link" type="url" @bind-Value="_draft.SFDCLink" />
     </div>
+    <h2>Sales stages</h2>
+    @foreach (var stage in _draft.SalesStages)
+    {
+        <details>
+            <summary role="button">@stage.StageName <small><i>(click to toggle)</i></small></summary>
+            <article data-theme="light">
+                <label>
+                    Stage name
+                    <InputText @bind-Value="stage.StageName" />
+                </label>
+                <label>
+                    Description
+                    <InputText @bind-Value="stage.StageDescription" />
+                </label>
+                <fieldset>
+                    <legend>Stage type</legend>
+                    <InputCheckbox @bind-Value="stage.IsRenewalStage" /> <label>Renewal stage</label>
+                    <InputCheckbox @bind-Value="stage.IsValidationStage" /> <label>Validation stage</label>
+                    <InputCheckbox @bind-Value="stage.IsWonStage" /> <label>Won stage</label>
+                    <InputCheckbox @bind-Value="stage.IsClosedLostStage" /> <label>Closed-lost stage</label>
+                </fieldset>
+                <button type="button" class="secondary" @onclick="() => RemoveStage(stage)">Remove stage</button>
+            </article>
+        </details>
+    }
+    <button type="button" class="secondary" @onclick="AddStage">Add stage</button>
     <p>Last edited: @_draft.LastEditTime.ToLocalTime().ToString("g")</p>
     <button type="submit" disabled="@_isSaving">
         @(_isSaving ? "Saving..." : "Save")
@@ -34,21 +60,48 @@
     protected override void OnInitialized()
     {
         _draft.SFDCLink = ConfigSettings.SFDCLink;
+        _draft.SalesStages = ConfigSettings.SalesStages
+            .Select(stage => new ConfigSettingSalesStage
+            {
+                StageName = stage.StageName,
+                StageDescription = stage.StageDescription,
+                IsRenewalStage = stage.IsRenewalStage,
+                IsClosedLostStage = stage.IsClosedLostStage,
+                IsWonStage = stage.IsWonStage,
+                IsValidationStage = stage.IsValidationStage
+            })
+            .ToList();
         _draft.LastEditTime = ConfigSettings.LastEditTime;
     }
 
+    private void AddStage() => _draft.SalesStages.Add(new ConfigSettingSalesStage());
+
+    private void RemoveStage(ConfigSettingSalesStage stage) => _draft.SalesStages.Remove(stage);
+
     private async Task SaveAsync()
     {
-        _isSaving = true;
         _statusMessage = string.Empty;
         _statusClass = string.Empty;
 
+        var stageNames = _draft.SalesStages
+            .Select(stage => stage.StageName.Trim())
+            .ToList();
+        if (stageNames.Any(string.IsNullOrWhiteSpace)
+            || stageNames.Distinct(StringComparer.OrdinalIgnoreCase).Count() != stageNames.Count)
+        {
+            _statusMessage = "Every stage must have a unique, non-empty name.";
+            _statusClass = "text-danger";
+            return;
+        }
+
+        _isSaving = true;
         try
         {
             _draft.LastEditTime = DateTime.UtcNow;
             await ConfigCollection.InsertOneAsync(_draft);
 
             ConfigSettings.SFDCLink = _draft.SFDCLink;
+            ConfigSettings.SalesStages = _draft.SalesStages;
             ConfigSettings.LastEditTime = _draft.LastEditTime;
 
             _statusMessage = "Configuration saved successfully.";

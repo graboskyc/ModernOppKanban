@@ -13,13 +13,6 @@ namespace OppKanban.Datamodels
         [BsonElement("oppMetadata")]
         public OppMetadata? OppMetadata {get;set;}
 
-        /// <summary>
-        /// Get the Status as an enum for type-safe stage handling
-        /// </summary>
-        public OpportunityStage GetStageEnum()
-        {
-            var stage = StageHelper.ParseStage(OppDetails?.Status ?? "");
-            return stage ?? OpportunityStage.Discover;  // Default to Prospecting if parsing fails
-        }
+        public string GetStageName() => OppDetails?.Status ?? string.Empty;
     }
 }

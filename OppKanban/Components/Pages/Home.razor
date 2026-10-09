@@ -8,6 +8,7 @@
 @inject IMongoCollection<OppView> OppCollection
 @inject IMongoCollection<OppBase> OppsCollection
 @inject IJSRuntime JS
+@inject IConfigSettings AppConfig
 @using Microsoft.FluentUI.AspNetCore.Components;
 
 <PageTitle>Opportunities</PageTitle>
@@ -49,7 +50,7 @@ else
 	<div class="kanban-board @(_showOnlyValidation ? "validation-only" : string.Empty)" aria-label="Opportunity pipeline">
 		@foreach (var stage in VisibleStages)
 		{
-			var stageOpps = FilteredOpps.Where(opp => opp.GetStageEnum() == stage).ToList();
+			var stageOpps = FilteredOpps.Where(opp => StageHelper.IsSameStage(opp.GetStageName(), stage)).ToList();
 			<div class="kanban-lane" @ondragover="HandleDragOver" @ondragover:preventDefault="true" @ondrop:preventDefault="true" @ondrop="() => MoveOpportunityAsync(stage)">
 				<header class="kanban-lane-header">
 					<div>
@@ -103,7 +104,7 @@ else
 								</div>
 							</div>
 
-							<StageDiagram CurrentStage="@opp.GetStageEnum()" Width="100%" Height="70px" />
+							<StageDiagram CurrentStage="@opp.GetStageName()" Width="100%" Height="70px" />
 
 							<footer class="opportunity-card-footer">
 								<span>
@@ -140,7 +141,6 @@ else
 
 @code {
 	private readonly List<OppView> _opps = new();
-	private readonly IReadOnlyList<OpportunityStage> _stages = StageHelper.GetAllStages();
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private const string ShowRenewalStagesStorageKey = "opp-kanban:show-renewal-stages";
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
@@ -155,7 +155,7 @@ else
 	private string _statusMessage = string.Empty;
 	private bool _showToast;
 	private OppView? _draggedOpp;
-	private OpportunityStage? _draggedFromStage;
+	private string? _draggedFromStage;
 	private OppView? _selectedSearchOpp;
 	private bool _isSearchResultModalOpen;
 	private string? _highlightedOppId;
@@ -301,7 +301,7 @@ else
 	private void StartDragging(OppView opp)
 	{
 		_draggedOpp = opp;
-		_draggedFromStage = opp.GetStageEnum();
+		_draggedFromStage = opp.GetStageName();
 	}
 
 	private void ClearDragging()
@@ -314,9 +314,9 @@ else
 	{
 	}
 
-	private async Task MoveOpportunityAsync(OpportunityStage targetStage)
+	private async Task MoveOpportunityAsync(ConfigSettingSalesStage targetStage)
 	{
-		if (_draggedOpp is null || _draggedFromStage is null || _draggedFromStage == targetStage)
+		if (_draggedOpp is null || _draggedFromStage is null || StageHelper.IsSameStage(_draggedFromStage, targetStage))
 		{
 			ClearDragging();
 			return;
@@ -324,7 +324,7 @@ else
 
 		var opportunity = _draggedOpp;
 		var previousStatus = opportunity.OppDetails.Status;
-		opportunity.OppDetails.Status = targetStage.ToString();
+		opportunity.OppDetails.Status = targetStage.StageName;
 		ClearDragging();
 
 		try
@@ -341,18 +341,20 @@ else
 		}
 	}
 
-	private IReadOnlyList<OpportunityStage> VisibleStages
+	private IReadOnlyList<ConfigSettingSalesStage> VisibleStages
 	{
 		get
 		{
 			if (_showOnlyValidation)
 			{
-				return new[] { OpportunityStage.TechVal };
+				return StageHelper.GetAllStages(AppConfig)
+					.Where(stage => stage.IsValidationStage)
+					.ToList();
 			}
 
-			return _stages
-				.Where(stage => _showClosedStages || stage is not OpportunityStage.ClosedWon and not OpportunityStage.ClosedLost)
-				.Where(stage => _showRenewalStages || stage is not OpportunityStage.RenewalDiscussion and not OpportunityStage.RenewalPlanning and not OpportunityStage.Proposal)
+			return StageHelper.GetAllStages(AppConfig)
+				.Where(stage => _showClosedStages || !stage.IsWonStage && !stage.IsClosedLostStage)
+				.Where(stage => _showRenewalStages || !stage.IsRenewalStage)
 				.ToList();
 		}
 	}

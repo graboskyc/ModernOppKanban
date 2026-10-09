@@ -50,7 +50,7 @@
 					</tr>
 					<tr>
 						<td title="Current Stage"><FluentIcon Value="@(new Icons.Regular.Size20.ColumnTriple())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
-						<td><StageDiagram CurrentStage="@Opportunity.GetStageEnum()" Width="100%" Height="90px" /></td>
+						<td><StageDiagram CurrentStage="@Opportunity.GetStageName()" Width="100%" Height="90px" /></td>
 					</tr>
 					@if (Opportunity.OppMetadata is not null) {
 						<tr>

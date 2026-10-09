@@ -1,4 +1,5 @@
 @using OppKanban.Datamodels
+@inject IConfigSettings AppConfig
 
 <article data-theme="light">
     @if (_stageCounts.All(stage => stage.Count == 0))
@@ -27,13 +28,11 @@
 	protected override void OnParametersSet()
 	{
 		_stageCounts.Clear();
-		var countsByStage = Opportunities
-				.GroupBy(opportunity => opportunity.GetStageEnum())
-				.ToDictionary(group => group.Key, group => group.Count());
+		var opportunities = Opportunities.ToList();
 
-			_stageCounts.AddRange(StageHelper.GetAllStages().Select(stage => new StageCount(
+			_stageCounts.AddRange(StageHelper.GetAllStages(AppConfig).Select(stage => new StageCount(
 				StageHelper.GetStageName(stage),
-				countsByStage.GetValueOrDefault(stage))));
+				opportunities.Count(opportunity => StageHelper.IsSameStage(opportunity.GetStageName(), stage)))));
 	}
 
 	private sealed record StageCount(string Name, int Count);
