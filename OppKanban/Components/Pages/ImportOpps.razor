@@ -86,9 +86,12 @@
                     continue;
                 }
 
-                if (!decimal.TryParse(parts[8].Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var err))
+                var errText = parts[8].Trim();
+                var err = 0m;
+                if (errText.Length > 0 &&
+                    !decimal.TryParse(errText, NumberStyles.Number, CultureInfo.InvariantCulture, out err))
                 {
-                    _errors.Add($"Line {lineNumber}: invalid ERR '{parts[8].Trim()}'.");
+                    _errors.Add($"Line {lineNumber}: invalid ERR '{errText}'.");
                     continue;
                 }
 
