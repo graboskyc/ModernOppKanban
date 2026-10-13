@@ -251,3 +251,9 @@
 dialog article {
   max-width: 75vw !important;
 }
+
+.stack-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

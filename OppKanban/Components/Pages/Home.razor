@@ -30,7 +30,10 @@
 
 	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="65%" />
 
-	<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
+	<div class="stack-vertical">
+		<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
+		<SAFilter SAs="SalesArchitects" SelectedSAs="_selectedSAs" SelectedSAsChanged="HandleSAsChangedAsync" />
+	</div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
@@ -144,10 +147,12 @@ else
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private const string ShowRenewalStagesStorageKey = "opp-kanban:show-renewal-stages";
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
+	private const string SalesArchitectsStorageKey = "opp-kanban:sales-architects";
 	private bool _showClosedStages = true;
 	private bool _showRenewalStages = true;
 	private bool _showOnlyValidation;
 	private string[] _selectedCloseYears = Array.Empty<string>();
+	private string[] _selectedSAs = Array.Empty<string>();
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
 	private bool _isMetadataModalOpen;
@@ -183,6 +188,12 @@ else
 		if (storedCloseYears is not null)
 		{
 			_selectedCloseYears = storedCloseYears;
+		}
+
+		var storedSAs = await JS.InvokeAsync<string[]?>("oppFilterStorage.getValue", SalesArchitectsStorageKey);
+		if (storedSAs is not null)
+		{
+			_selectedSAs = storedSAs;
 		}
 
 		StateHasChanged();
@@ -364,9 +375,17 @@ else
 		.Distinct()
 		.OrderByDescending(year => year);
 
-	private IEnumerable<OppView> FilteredOpps => _selectedCloseYears.Length == 0
-		? _opps
-		: _opps.Where(opp => _selectedCloseYears.Contains(opp.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal));
+	private IEnumerable<string> SalesArchitects => _opps
+		.Select(opp => opp.OppDetails.PrimarySA)
+		.Where(name => !string.IsNullOrWhiteSpace(name))
+		.Distinct(StringComparer.Ordinal)
+		.OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
+
+	private IEnumerable<OppView> FilteredOpps => _opps.Where(opp =>
+		(_selectedCloseYears.Length == 0
+			|| _selectedCloseYears.Contains(opp.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal))
+		&& (_selectedSAs.Length == 0
+			|| _selectedSAs.Contains(opp.OppDetails.PrimarySA, StringComparer.Ordinal)));
 
 	private async Task PersistCloseYearsAsync()
 	{
@@ -377,6 +396,12 @@ else
 	{
 		_selectedCloseYears = selectedYears;
 		await PersistCloseYearsAsync();
+	}
+
+	private async Task HandleSAsChangedAsync(string[] selectedSAs)
+	{
+		_selectedSAs = selectedSAs;
+		await JS.InvokeVoidAsync("oppFilterStorage.setValue", SalesArchitectsStorageKey, _selectedSAs);
 	}
 
 	private async Task ToggleClosedStages()

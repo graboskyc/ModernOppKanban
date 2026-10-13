@@ -1,0 +1,87 @@
+<div class="sa-filter">
+    @if (_isOpen)
+    {
+        <button class="sa-filter-backdrop" type="button" aria-label="Close SA filter" @onclick="CloseDropdown"></button>
+    }
+
+    <button class="sa-filter-trigger" type="button" aria-expanded="@_isOpen" aria-haspopup="listbox" @onclick="ToggleOpen">
+        <span>@SelectionLabel</span>
+        <span class="sa-filter-caret" aria-hidden="true"></span>
+    </button>
+
+    @if (_isOpen)
+    {
+        <div class="sa-filter-options" role="group" aria-label="Sales architects">
+            <div class="sa-filter-actions">
+                <button class="sa-filter-action" type="button" @onclick="SelectAllAsync">Select all</button>
+                <button class="sa-filter-action" type="button" @onclick="ClearAllAsync">Clear all</button>
+            </div>
+
+            @foreach (var sa in SAs.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+            {
+                <label>
+                    <input type="checkbox"
+                           checked="@IsSelected(sa)"
+                           @onchange="() => ToggleSAAsync(sa)" />
+                    <span>@sa</span>
+                </label>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<string> SAs { get; set; } = Enumerable.Empty<string>();
+
+    [Parameter]
+    public string[] SelectedSAs { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public EventCallback<string[]> SelectedSAsChanged { get; set; }
+
+    private bool _isOpen;
+
+    private string SelectionLabel => SelectedSAs.Length == 0
+        ? "All SAs"
+        : $"{SelectedSAs.Length} SA{(SelectedSAs.Length == 1 ? string.Empty : "s")} selected";
+
+    private bool IsSelected(string sa) => SelectedSAs.Contains(sa, StringComparer.Ordinal);
+
+    private void ToggleOpen()
+    {
+        _isOpen = !_isOpen;
+    }
+
+    private void CloseDropdown()
+    {
+        _isOpen = false;
+    }
+
+    private async Task ToggleSAAsync(string sa)
+    {
+        var selectedSAs = SelectedSAs.ToHashSet(StringComparer.Ordinal);
+
+        if (!selectedSAs.Add(sa))
+        {
+            selectedSAs.Remove(sa);
+        }
+
+        await SelectedSAsChanged.InvokeAsync(selectedSAs.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray());
+    }
+
+    private async Task SelectAllAsync()
+    {
+        var selectedSAs = SAs
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        await SelectedSAsChanged.InvokeAsync(selectedSAs);
+    }
+
+    private async Task ClearAllAsync()
+    {
+        await SelectedSAsChanged.InvokeAsync(Array.Empty<string>());
+    }
+}
