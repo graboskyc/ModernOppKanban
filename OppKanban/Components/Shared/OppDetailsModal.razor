@@ -52,6 +52,12 @@
 						<td title="Current Stage"><FluentIcon Value="@(new Icons.Regular.Size20.ColumnTriple())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
 						<td><StageDiagram CurrentStage="@Opportunity.GetStageName()" Width="100%" Height="90px" /></td>
 					</tr>
+					@if(!string.IsNullOrEmpty(Opportunity.OppDetails.Notes)) {
+						<tr>
+							<td title="Notes"><FluentIcon Value="@(new Icons.Regular.Size20.Notepad())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+							<td style="white-space: pre-wrap;">@Opportunity.OppDetails.Notes</td>
+						</tr>
+					}
 					@if (Opportunity.OppMetadata is not null) {
 						<tr>
 							<td title="SA Likelihood"><FluentIcon Value="@(new Icons.Regular.Size20.DocumentPercent())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>

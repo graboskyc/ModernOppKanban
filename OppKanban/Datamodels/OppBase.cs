@@ -28,6 +28,8 @@ namespace OppKanban.Datamodels
         public DateTime CloseDate {get;set;}
         [BsonElement("err")]
         public decimal Err {get;set;}
+        [BsonElement("notes")]
+        public string Notes {get;set;}
         public string ErrRounded
         {
             get

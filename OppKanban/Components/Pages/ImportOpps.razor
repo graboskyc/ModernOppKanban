@@ -10,7 +10,7 @@
 
 <h1>Import Opportunities</h1>
 
-<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR</code></p>
+<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR,Notes</code></p>
 
 <InputFile OnChange="HandleFileSelected" accept=".csv" />
 
@@ -68,9 +68,9 @@
                     continue;
                 }
 
-                if (parts.Length < 9)
+                if (parts.Length < 10)
                 {
-                    _errors.Add($"Line {lineNumber}: expected 9 columns, got {parts.Length}.");
+                    _errors.Add($"Line {lineNumber}: expected 10 columns, got {parts.Length}.");
                     continue;
                 }
 
@@ -105,7 +105,8 @@
                     Status = parts[5].Trim(),
                     CreatedDate = createdDate,
                     CloseDate = closeDate,
-                    Err = err
+                    Err = err,
+                    Notes = parts[9].Trim()
                 });
             }
 
