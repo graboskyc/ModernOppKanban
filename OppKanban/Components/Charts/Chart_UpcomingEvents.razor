@@ -22,13 +22,26 @@
 	}
 	else
 	{
-		<EventsTimeline Events="_events" />
+		<EventsTimeline Events="_events" OnEventClick="OpenOpportunityAsync" />
+	}
+
+	@if (!string.IsNullOrWhiteSpace(_openErrorMessage))
+	{
+		<p class="text-danger">@_openErrorMessage</p>
+	}
+
+	@if (_selectedOpportunity is not null)
+	{
+		<OppDetailsModal Opportunity="_selectedOpportunity" OnClose="CloseOpportunityModal" />
 	}
 </div>
 @code {
 	private readonly List<EventEntry> _events = new();
+	private readonly Dictionary<EventEntry, string> _eventOpportunityIds = new();
+	private OppView? _selectedOpportunity;
 	private bool _isLoading = true;
 	private string _errorMessage = string.Empty;
+	private string _openErrorMessage = string.Empty;
 	
 	const int _cutoffDays = 90;
 
@@ -46,13 +59,17 @@
 					Builders<UpcomingEventResult>.Filter.Lt(x => x.OppMetadata!.Events!.EventDate, cutoff)))
 				.ToListAsync();
 
-			_events.AddRange(results
-				.Where(r => r.OppMetadata?.Events is not null)
-				.Select(r => new EventEntry
+			foreach (var result in results.Where(r => r.OppDetails is not null && r.OppMetadata?.Events is not null))
+			{
+				var evt = new EventEntry
 				{
-					EventName = $"{r.OppDetails?.OppName}: {r.OppMetadata!.Events!.EventName}",
-					EventDate = r.OppMetadata!.Events!.EventDate
-				}));
+					EventName = $"{result.OppDetails!.OppName}: {result.OppMetadata!.Events!.EventName}",
+					EventDate = result.OppMetadata!.Events!.EventDate
+				};
+
+				_events.Add(evt);
+				_eventOpportunityIds.Add(evt, result.OppDetails!.Id);
+			}
 		}
 		catch (Exception ex)
 		{
@@ -62,6 +79,40 @@
 		{
 			_isLoading = false;
 		}
+	}
+
+	private async Task OpenOpportunityAsync(EventEntry evt)
+	{
+		if (!_eventOpportunityIds.TryGetValue(evt, out var opportunityId))
+		{
+			_openErrorMessage = "Unable to open opportunity: event information is unavailable.";
+			return;
+		}
+
+		try
+		{
+			_selectedOpportunity = await OppCollection
+				.Find(opp => opp.OppDetails.Id == opportunityId)
+				.FirstOrDefaultAsync();
+
+			if (_selectedOpportunity is null)
+			{
+				_openErrorMessage = "Unable to open opportunity: opportunity not found.";
+			}
+			else
+			{
+				_openErrorMessage = string.Empty;
+			}
+		}
+		catch (Exception ex)
+		{
+			_openErrorMessage = $"Unable to open opportunity: {ex.Message}";
+		}
+	}
+
+	private void CloseOpportunityModal()
+	{
+		_selectedOpportunity = null;
 	}
 
 	// shape of a document after $unwind collapses oppMetadata.events into a single subdocument

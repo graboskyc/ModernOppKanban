@@ -37,6 +37,16 @@
     stroke-width: 2;
 }
 
+.events-timeline-event.clickable {
+    cursor: pointer;
+}
+
+.events-timeline-event.clickable:hover .events-timeline-point,
+.events-timeline-event.clickable:focus .events-timeline-point {
+    stroke: var(--pico-primary-hover);
+    stroke-width: 3;
+}
+
 .events-timeline-date {
     font-size: 11px;
     fill: var(--pico-muted-color);
