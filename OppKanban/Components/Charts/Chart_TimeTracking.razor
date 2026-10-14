@@ -14,7 +14,7 @@
     }
     else if (_customerFacingHours.Count == 0 && _nonCustomerFacingHours.Count == 0)
     {
-        <p>No calendar events found.</p>
+        <p>No calendar events found for @ChartDateRangeText.</p>
     }
     else
     {
@@ -78,9 +78,19 @@
     };
     private bool _isLoading = true;
     private string _errorMessage = string.Empty;
-    private string ChartTitle => string.IsNullOrWhiteSpace(Title)
-        ? "Calendar event hours by first name"
-        : Title;
+    private (DateTime StartDate, DateTime EndDate) _chartDateRange;
+    private string ChartTitle
+    {
+        get
+        {
+            var title = string.IsNullOrWhiteSpace(Title)
+                ? "Calendar event hours by first name"
+                : Title;
+            return $"{title} ({ChartDateRangeText})";
+        }
+    }
+    private string ChartDateRangeText =>
+        $"{_chartDateRange.StartDate:yyyy-MM-dd} - {_chartDateRange.EndDate.AddDays(-1):yyyy-MM-dd}";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -106,9 +116,9 @@
 
         try
         {
-            var (startDate, endDate) = GetDateRange(ChartType);
-            var filter = Builders<CalendarEvent>.Filter.Gte(calendarEvent => calendarEvent.StartTime, startDate)
-                & Builders<CalendarEvent>.Filter.Lt(calendarEvent => calendarEvent.StartTime, endDate);
+            _chartDateRange = GetDateRange(ChartType);
+            var filter = Builders<CalendarEvent>.Filter.Gte(calendarEvent => calendarEvent.StartTime, _chartDateRange.StartDate)
+                & Builders<CalendarEvent>.Filter.Lt(calendarEvent => calendarEvent.StartTime, _chartDateRange.EndDate);
             var events = await CalendarEventCollection
                 .Find(filter)
                 .ToListAsync();
