@@ -49,6 +49,9 @@
     [Parameter]
     public double? MaxXValue { get; set; }
 
+    [Parameter]
+    public int? ReferenceLineValue { get; set; }
+
     private readonly List<FirstNameDuration> _customerFacingHours = new();
     private readonly List<FirstNameDuration> _nonCustomerFacingHours = new();
     private readonly ApexChartOptions<FirstNameDuration> _chartOptions = new()
@@ -86,6 +89,20 @@
         _isLoading = true;
         _errorMessage = string.Empty;
         _chartOptions.Xaxis!.Max = MaxXValue;
+        _chartOptions.Annotations = ReferenceLineValue.HasValue
+            ? new Annotations
+            {
+                Xaxis = new List<AnnotationsXAxis>
+                {
+                    new()
+                    {
+                        X = ReferenceLineValue.Value,
+                        BorderColor = "#ff4560",
+                        BorderWidth = 2
+                    }
+                }
+            }
+            : null;
 
         try
         {
