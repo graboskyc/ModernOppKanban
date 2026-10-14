@@ -31,10 +31,6 @@ else
 		<Chart_OppOwnership @key="OwnershipChartKey(true)" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
 		<Chart_OppOwnership @key="OwnershipChartKey(false)" Opportunities="FilteredOpportunities" ExcludeClosed="false" />
 	</div>
-	
-	<div class="grid">
-		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
-	</div>
 
 	<div class="grid">
 		<Chart_WinLoss @key="WinLossChartKey" Opportunities="FilteredOpportunities" />
@@ -44,8 +40,13 @@ else
 
 	<div class="grid">
 		<Chart_TimeTracking ChartType="LastBusinessWeek" Title="Last Week" MaxXValue=35 ReferenceLineValue=10  />
-		<Chart_TimeTracking ChartType="LastMonth" Title="Last Month" />
+		<Chart_TimeTracking ChartType="ThisWeek" Title="This Week" MaxXValue=35 ReferenceLineValue=10  />
 		<Chart_TimeTracking ChartType="ProjectedNextWeek" Title="Projected Next Week" MaxXValue=35 ReferenceLineValue=10 />
+	</div>
+	
+	<div class="grid">
+		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
+		<Chart_TimeTracking ChartType="LastMonth" Title="Last Month" />
 	</div>
 
 	<div class="grid">

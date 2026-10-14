@@ -37,7 +37,8 @@
 
 @code {
 	[Parameter]
-    // valid options are "LastBusinessWeek", "LastMonth", and "ProjectedNextWeek"
+    // valid options are "ThisWeek", "LastBusinessWeek", "LastMonth", and "ProjectedNextWeek"
+    // ThisWeek: Monday to Friday of the current week
     // LastBusinessWeek: Monday to Friday of the previous week
     // LastMonth: 30 days prior to today
     // ProjectedNextWeek: Monday to Friday of the next week
@@ -157,6 +158,9 @@
 
         return chartType switch
         {
+            "ThisWeek" => (
+                currentWeekMonday,
+                currentWeekMonday.AddDays(6)),
             "LastBusinessWeek" => (
                 currentWeekMonday.AddDays(-7),
                 currentWeekMonday.AddDays(-2)),
@@ -167,7 +171,7 @@
                 currentWeekMonday.AddDays(7),
                 currentWeekMonday.AddDays(12)),
             _ => throw new ArgumentException(
-                $"Unsupported chart type '{chartType}'. Valid options are LastBusinessWeek, LastMonth, and ProjectedNextWeek.",
+                $"Unsupported chart type '{chartType}'. Valid options are ThisWeek, LastBusinessWeek, LastMonth, and ProjectedNextWeek.",
                 nameof(chartType))
         };
     }
