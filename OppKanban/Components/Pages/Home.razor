@@ -17,16 +17,23 @@
 
 <div class="kanban-page-header">
 	@if(!_showOnlyValidation) {
-		<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
-			@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
-		</button>
-		<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-			@(_showRenewalStages ? "Hide renewals" : "Show renewals")
-		</button>
+		<div class="stack-vertical">
+			<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
+				@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
+			</button>
+			<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
+				@(_showRenewalStages ? "Hide renewals" : "Show renewals")
+			</button>
+		</div>
 	}
-	<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
-		@(_showOnlyValidation ? "Show all stages" : "Show only validation")
-	</button>
+	<div class="stack-vertical">
+		<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
+			@(_showOnlyValidation ? "Show all stages" : "Show only validation")
+		</button>
+		<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
+			@(_showOnlyStarred ? "Show all star status" : "Show only starred")
+		</button>
+	</div>
 
 	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="65%" />
 
@@ -69,7 +76,13 @@ else
 						<article class="opportunity-card @(IsHighlighted(opp) ? "opportunity-card-highlighted" : string.Empty)" draggable="true" @ondragstart="() => StartDragging(opp)" @ondragend="ClearDragging">
 							<div class="opportunity-card-heading">
 								<div>
-									<h3>@opp.OppDetails.OppName</h3>
+									<h3>
+										@if(opp.OppMetadata?.IsStarred == true)
+										{
+											<FluentIcon Value="@(new Icons.Regular.Size20.Star())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+										}
+										<spaan>@opp.OppDetails.OppName</spaan>										
+									</h3>
 									<h6 class="account-name">@opp.OppDetails.AccountName</h6>
 								</div>
 								<button class="metadata-button" aria-label="Open metadata for @opp.OppDetails.OppName" title="Open metadata" @onclick="() => HandleOpportunitySelectedAsync(opp.OppDetails)">
@@ -135,7 +148,7 @@ else
 
 @if (_isSearchResultModalOpen)
 {
-	<OppDetailsModal Opportunity="_selectedSearchOpp" OnClose="CloseSearchResultModal" OnEdit="EditSelectedOpportunityAsync" />
+	<OppDetailsModal Opportunity="_selectedSearchOpp" OnClose="CloseSearchResultModal" OnEdit="EditSelectedOpportunityAsync" OnToast="ShowToast" />
 }
 
 <Toast Message="@_statusMessage" Show="_showToast">
@@ -146,11 +159,13 @@ else
 	private readonly List<OppView> _opps = new();
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private const string ShowRenewalStagesStorageKey = "opp-kanban:show-renewal-stages";
+	private const string ShowStarredOnlyStorageKey = "opp-kanban:show-starred-only";
 	private const string CloseYearsStorageKey = "opp-kanban:close-years";
 	private const string SalesArchitectsStorageKey = "opp-kanban:sales-architects";
 	private bool _showClosedStages = true;
 	private bool _showRenewalStages = true;
 	private bool _showOnlyValidation;
+	private bool _showOnlyStarred;
 	private string[] _selectedCloseYears = Array.Empty<string>();
 	private string[] _selectedSAs = Array.Empty<string>();
 	private OppBase? _selectedOpp;
@@ -182,6 +197,12 @@ else
 		if (bool.TryParse(storedRenewalValue, out var showRenewalStages))
 		{
 			_showRenewalStages = showRenewalStages;
+		}
+
+		var storedStarredValue = await JS.InvokeAsync<string?>("oppFilterStorage.getValue", ShowStarredOnlyStorageKey);
+		if (bool.TryParse(storedStarredValue, out var showOnlyStarred))
+		{
+			_showOnlyStarred = showOnlyStarred;
 		}
 
 		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
@@ -385,7 +406,8 @@ else
 		(_selectedCloseYears.Length == 0
 			|| _selectedCloseYears.Contains(opp.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal))
 		&& (_selectedSAs.Length == 0
-			|| _selectedSAs.Contains(opp.OppDetails.PrimarySA, StringComparer.Ordinal)));
+			|| _selectedSAs.Contains(opp.OppDetails.PrimarySA, StringComparer.Ordinal))
+		&& (!_showOnlyStarred || opp.OppMetadata?.IsStarred == true));
 
 	private async Task PersistCloseYearsAsync()
 	{
@@ -414,6 +436,12 @@ else
 	{
 		_showRenewalStages = !_showRenewalStages;
 		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowRenewalStagesStorageKey, _showRenewalStages.ToString());
+	}
+
+	private async Task ToggleStarredOnly()
+	{
+		_showOnlyStarred = !_showOnlyStarred;
+		await JS.InvokeVoidAsync("oppFilterStorage.setValue", ShowStarredOnlyStorageKey, _showOnlyStarred.ToString());
 	}
 
 	private void ToggleValidationOnly()

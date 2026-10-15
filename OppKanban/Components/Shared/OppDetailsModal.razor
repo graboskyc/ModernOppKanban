@@ -2,7 +2,9 @@
 @using System.Linq
 @using Microsoft.FluentUI.AspNetCore.Components;
 @using HeyRed.MarkdownSharp;
+@using MongoDB.Driver
 @inject IConfigSettings AppConfig
+@inject IMongoCollection<OppMetadata> MetadataCollection
 
 @if (Opportunity is not null)
 {
@@ -26,7 +28,19 @@
 					</tr>
 					<tr>
 						<td title="Opportunity Name"><FluentIcon Value="@(new Icons.Regular.Size20.ReceiptMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
-						<td>@Opportunity.OppDetails.OppName</td>
+						<td>
+							<button type="button" class="secondary" aria-label="@(IsStarred ? "Unstar opportunity" : "Star opportunity")" title="@(IsStarred ? "Unstar opportunity" : "Star opportunity")" aria-pressed="@IsStarred" disabled="@_isTogglingStar" @onclick="ToggleStarAsync" style="padding: 0.25rem; margin-right: 0.35rem; vertical-align: middle;">
+								@if (IsStarred)
+								{
+									<FluentIcon Value="@(new Icons.Regular.Size20.Star())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+								}
+								else
+								{
+									<FluentIcon Value="@(new Icons.Regular.Size20.StarOff())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+								}
+							</button>
+							<span>@Opportunity.OppDetails.OppName</span>
+						</td>
 					</tr>
 					<tr>
 						<td title="Opportunity Owner"><FluentIcon Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
@@ -144,8 +158,14 @@
 
 	[Parameter]
 	public EventCallback OnEdit { get; set; }
+
+	[Parameter]
+	public EventCallback<string> OnToast { get; set; }
 	Markdown mark = new Markdown();
 	private MarkupString _meddpiccNotesMarkup;
+	private bool _isTogglingStar;
+
+	private bool IsStarred => Opportunity?.OppMetadata?.IsStarred == true;
 
 	private async Task CloseModalAsync()
 	{
@@ -155,6 +175,44 @@
 	private async Task EditOpportunityAsync()
 	{
 		await OnEdit.InvokeAsync();
+	}
+
+	private async Task ToggleStarAsync()
+	{
+		if (Opportunity is null || _isTogglingStar)
+		{
+			return;
+		}
+
+		_isTogglingStar = true;
+		var isStarred = !IsStarred;
+
+		try
+		{
+			var filter = Builders<OppMetadata>.Filter.Eq(x => x.OppId, Opportunity.OppDetails.Id);
+			var update = Builders<OppMetadata>.Update
+				.Set(x => x.OppId, Opportunity.OppDetails.Id)
+				.Set(x => x.IsStarred, isStarred);
+			var metadata = await MetadataCollection.FindOneAndUpdateAsync(
+				filter,
+				update,
+				new FindOneAndUpdateOptions<OppMetadata>
+				{
+					IsUpsert = true,
+					ReturnDocument = ReturnDocument.After
+				});
+
+			Opportunity.OppMetadata = metadata;
+			await OnToast.InvokeAsync(isStarred ? "Opportunity starred." : "Opportunity unstarred.");
+		}
+		catch (Exception ex)
+		{
+			await OnToast.InvokeAsync($"Unable to update star: {ex.Message}");
+		}
+		finally
+		{
+			_isTogglingStar = false;
+		}
 	}
 
 	// on parameter set, if Opportunity is not null and has a MgrNote, convert it to MarkupString

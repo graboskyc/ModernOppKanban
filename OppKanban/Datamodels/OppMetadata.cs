@@ -81,5 +81,7 @@ namespace OppKanban.Datamodels
         public List<FeedbackItem> Feedback {get;set;} = new List<FeedbackItem>();
         [BsonElement("meddpicc")]
         public MEDDPICC MEDDPICC {get;set;} = new MEDDPICC();
+        [BsonElement("isStarred")]
+        public bool IsStarred {get;set;} = false;
     }
 }
