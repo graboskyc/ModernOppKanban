@@ -10,6 +10,8 @@ namespace OppKanban.Datamodels
 
         string FiscalYearStart { get; set; }
 
+        List<string> TrackedEmailDomains { get; set; }
+
         List<ConfigSettingSalesStage> SalesStages { get; set; }
 
         DateTime LastEditTime { get; set; }
@@ -23,6 +25,9 @@ namespace OppKanban.Datamodels
 
         [BsonElement("fiscalYearStart")]
         public string FiscalYearStart { get; set; } = "feb1";
+
+        [BsonElement("trackedEmailDomains")]
+        public List<string> TrackedEmailDomains { get; set; } = new List<string>();
 
         [BsonElement("salesStages")]
         public List<ConfigSettingSalesStage> SalesStages { get; set; } = new List<ConfigSettingSalesStage>()

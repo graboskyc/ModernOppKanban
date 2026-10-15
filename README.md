@@ -12,6 +12,16 @@ SFDC remains the source of truth and you can re-import over top without losing S
 
 Visit `http://localhost:80`
 
+### Running the llama.cpp reranker
+
+The llama.cpp reranker is an optional Docker Compose service and runs on CPU, including on Apple Silicon Macs. Start the app and reranker together with:
+
+`docker compose --profile ai up --build`
+
+Or use `./run.sh ai`. Docker Desktop containers on macOS do not use Apple's Metal GPU, so reranking runs on CPU. The app reaches llama.cpp over the Compose network at `http://llama-reranker:8000/`; the server port is not published to the host. The Q4_K_M version of Qwen3-Reranker-0.6B is downloaded from Hugging Face on first start and cached in the `llama-cache` volume. To use an external compatible reranker server instead, set `Reranker__BaseUrl` before starting the app; from Docker Compose, a host server is reachable at `http://host.docker.internal:8000/`.
+
+Without the reranker, start the regular app with `docker compose up`. To use an external compatible reranker server, set `Reranker__BaseUrl` to its URL before starting the app.
+
 ### Connecting to MongoDB from the host
 
 The MongoDB container publishes port `27017` on the host. Since the replica set advertises the Docker-only hostname `mongodb`, host-side clients must use a direct connection:

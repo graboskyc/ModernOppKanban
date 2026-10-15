@@ -1,0 +1,292 @@
+@using System.Net.Http.Json
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using MongoDB.Driver
+@using OppKanban.Datamodels
+@inject IMongoCollection<CalendarEvent> CalendarEventCollection
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+@inject ILogger<AIMeetingRerank> Logger
+@implements IDisposable
+@inject IConfigSettings ConfigSettings
+
+@if (_isLoading)
+{
+    <p aria-busy="true">Loading and reranking meetings...</p>
+}
+else if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <p role="alert">@_errorMessage</p>
+}
+else if (_hasLoaded && _rankedEvents.Count == 0)
+{
+    <p>No meetings met the relevance cutoff.</p>
+}
+else if (_rankedEvents.Count > 0)
+{
+    <ol>
+        @foreach (var rankedEvent in _rankedEvents)
+        {
+            <li @key="rankedEvent.Event">
+                <strong>@(string.IsNullOrWhiteSpace(rankedEvent.Event.MeetingName) ? "Untitled meeting" : rankedEvent.Event.MeetingName)</strong>
+                <span>Score: @rankedEvent.Score.ToString("0.000")</span>
+                <time>@rankedEvent.Event.StartTime.ToString("g") – @rankedEvent.Event.EndTime.ToString("t")</time>
+            </li>
+        }
+    </ol>
+}
+
+@code {
+    [Parameter]
+    public string SA { get; set; } = string.Empty;
+    private List<string> _saEmail = new();
+
+    [Parameter]
+    public DateTime MeetingStartTime { get; set; } = DateTime.MinValue;
+
+    [Parameter]
+    public DateTime MeetingEndTime { get; set; } = DateTime.Now;
+    private DateTime _endTime = DateTime.Now;
+
+    [Parameter]
+    public string OpportunityInformationQuery { get; set; } = string.Empty;
+
+    [Parameter]
+    public float CutoffScore { get; set; } = 0.5f;
+
+    private readonly List<RankedMeeting> _rankedEvents = new();
+    private CancellationTokenSource? _loadCts;
+    private bool _isLoading;
+    private bool _hasLoaded;
+    private string? _errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var cts = new CancellationTokenSource();
+        var previousCts = _loadCts;
+        _loadCts = cts;
+        previousCts?.Cancel();
+
+        _isLoading = true;
+        _hasLoaded = false;
+        _errorMessage = null;
+        _rankedEvents.Clear();
+
+        try
+        {
+            WriteDebug($"Starting load. HasEmail={!string.IsNullOrWhiteSpace(SA)}, window={MeetingStartTime:O}..{MeetingEndTime:O}, cutoff={CutoffScore:0.000}.");
+
+            if (string.IsNullOrWhiteSpace(SA))
+            {
+                WriteDebug("Skipping load because SA is empty.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(OpportunityInformationQuery))
+            {
+                throw new InvalidOperationException("Provide opportunity information before reranking meetings.");
+            }
+
+            if (!float.IsFinite(CutoffScore) || CutoffScore is < 0 or > 1)
+            {
+                throw new InvalidOperationException("The relevance cutoff must be between 0 and 1.");
+            }
+
+            if(MeetingEndTime > DateTime.Now)
+            {
+                _endTime = DateTime.Now;
+            } else
+            {
+                _endTime = MeetingEndTime;
+            }
+
+            if (MeetingStartTime > _endTime)
+            {
+                throw new InvalidOperationException("The meeting start time must be earlier than the end time.");
+            }
+
+            // get the list of possible SA emails for the given SA name. valid domains are in the config
+            foreach (var domain in ConfigSettings.TrackedEmailDomains)
+            {
+                _saEmail.Add(SA.ToLower().Replace(" ",".")+"@"+domain);
+            }
+
+            var filter = Builders<CalendarEvent>.Filter.And(
+                Builders<CalendarEvent>.Filter.In(e => e.Email, _saEmail),
+                Builders<CalendarEvent>.Filter.Eq(e => e.CustomerFacing, true),
+                Builders<CalendarEvent>.Filter.Gte(e => e.StartTime, MeetingStartTime),
+                Builders<CalendarEvent>.Filter.Lte(e => e.EndTime, _endTime)
+            );
+
+            var events = await CalendarEventCollection.Find(filter).ToListAsync(cts.Token);
+            WriteDebug($"MongoDB returned {events.Count} customer-facing events.");
+            if (events.Count == 0)
+            {
+                WriteDebug("No events matched the database filter; reranker will not be called.");
+                if (IsCurrentRequest(cts))
+                {
+                    _hasLoaded = true;
+                }
+
+                return;
+            }
+
+            var requestUri = GetRerankRequestUri();
+            var client = HttpClientFactory.CreateClient("reranker");
+            WriteDebug($"POST {requestUri} with {events.Count} documents.");
+            using var response = await client.PostAsJsonAsync(
+                requestUri,
+                new RerankRequest(
+                    OpportunityInformationQuery,
+                    events.Select(FormatEvent).ToList()),
+                cts.Token);
+
+            WriteDebug($"Reranker responded with HTTP {(int)response.StatusCode} ({response.StatusCode}).");
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync(cts.Token);
+                var detail = responseBody.Length > 1000 ? responseBody[..1000] : responseBody;
+                WriteDebug($"Reranker error response: {detail}");
+                throw new HttpRequestException(
+                    $"Reranking failed with HTTP {(int)response.StatusCode} ({response.StatusCode}): {detail}");
+            }
+
+            var rerankResponse = await response.Content.ReadFromJsonAsync<RerankResponse>(
+                cancellationToken: cts.Token)
+                ?? throw new JsonException("The reranker returned an empty response.");
+
+            WriteDebug($"Reranker returned {rerankResponse.Results.Count} scores.");
+            var rankedEvents = rerankResponse.Results.Select(result =>
+            {
+                if ((uint)result.Index >= (uint)events.Count || !double.IsFinite(result.RelevanceScore))
+                {
+                    throw new JsonException("The reranker returned an invalid event index or relevance score.");
+                }
+
+                return new RankedMeeting(events[result.Index], result.RelevanceScore);
+            });
+
+            var scoredEvents = rankedEvents.ToList();
+            foreach (var result in scoredEvents)
+            {
+                WriteDebug($"Result index={events.IndexOf(result.Event)}, score={result.Score:0.000000}, cutoff={CutoffScore:0.000}, passes={result.Score >= CutoffScore}.");
+            }
+
+            if (!IsCurrentRequest(cts))
+            {
+                WriteDebug("Discarding reranker response because the request was superseded.");
+                return;
+            }
+
+            _rankedEvents.AddRange(scoredEvents
+                .Where(result => result.Score >= CutoffScore)
+                .OrderByDescending(result => result.Score));
+            _hasLoaded = true;
+            WriteDebug($"Displaying {_rankedEvents.Count} events at or above the cutoff.");
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            WriteDebug("Request was cancelled because parameters changed or the component was disposed.");
+        }
+        catch (OperationCanceledException ex)
+        {
+            Logger.LogError(ex, "The meeting reranking request timed out.");
+            WriteDebug($"Reranking timed out: {ex.Message}");
+            if (IsCurrentRequest(cts))
+            {
+                _errorMessage = "The reranking request timed out.";
+            }
+        }
+        catch (MongoException ex)
+        {
+            Logger.LogError(ex, "Unable to load calendar events for {SA}.", SA);
+            WriteDebug($"MongoDB query failed: {ex.Message}");
+            if (IsCurrentRequest(cts))
+            {
+                _errorMessage = "Unable to load calendar events.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "Unable to rerank calendar events.");
+            WriteDebug($"Reranker HTTP request failed: {ex.Message}");
+            if (IsCurrentRequest(cts))
+            {
+                _errorMessage = ex.Message;
+            }
+        }
+        catch (JsonException ex)
+        {
+            Logger.LogError(ex, "The reranker returned an invalid response.");
+            WriteDebug($"Could not parse reranker response: {ex.Message}");
+            if (IsCurrentRequest(cts))
+            {
+                _errorMessage = "The reranker returned an invalid response.";
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            Logger.LogWarning(ex, "Unable to rerank calendar events.");
+            WriteDebug($"Reranking configuration/input error: {ex.Message}");
+            if (IsCurrentRequest(cts))
+            {
+                _errorMessage = ex.Message;
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_loadCts, cts))
+            {
+                _loadCts = null;
+                _isLoading = false;
+            }
+
+            cts.Dispose();
+        }
+    }
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+    }
+
+    private bool IsCurrentRequest(CancellationTokenSource cts) =>
+        ReferenceEquals(_loadCts, cts) && !cts.IsCancellationRequested;
+
+    private static void WriteDebug(string message) =>
+        Console.WriteLine($"[AIMeetingRerank] {message}");
+
+    private Uri GetRerankRequestUri()
+    {
+        var baseUrl = Configuration["Reranker:BaseUrl"];
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri)
+            || baseUri.Scheme is not ("http" or "https"))
+        {
+            throw new InvalidOperationException(
+                "Configure Reranker:BaseUrl with the reranker server URL, for example http://localhost:8000/.");
+        }
+
+        return new Uri($"{baseUri.AbsoluteUri.TrimEnd('/')}/rerank");
+    }
+
+    private static string FormatEvent(CalendarEvent calendarEvent) =>
+        $"Meeting: {calendarEvent.MeetingName}\n" +
+        $"Start: {calendarEvent.StartTime:O}\n" +
+        $"End: {calendarEvent.EndTime:O}\n" +
+        $"Duration: {calendarEvent.DurationMin} minutes\n" +
+        $"Customer-facing: {calendarEvent.CustomerFacing}\n" +
+        $"Partner-only: {calendarEvent.IsPartnerOnly}";
+
+    private sealed record RankedMeeting(CalendarEvent Event, double Score);
+
+    private sealed record RerankRequest(
+        [property: JsonPropertyName("query")] string Query,
+        [property: JsonPropertyName("documents")] IReadOnlyList<string> Documents);
+
+    private sealed record RerankResponse(
+        [property: JsonPropertyName("results")] List<RerankResult> Results);
+
+    private sealed record RerankResult(
+        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("relevance_score")] double RelevanceScore);
+}

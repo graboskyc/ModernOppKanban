@@ -2,7 +2,9 @@
 
 set -e
 
-if [ "$#" -eq 0 ]; then
+if [ "$#" -eq 1 ] && [ "$1" = "ai" ]; then
+	docker compose --profile ai up --build
+elif [ "$#" -eq 0 ]; then
 	docker compose up --build
 else
 	export MongoDb__ConnectionString="$1"

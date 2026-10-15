@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddApexCharts();
+builder.Services.AddHttpClient("reranker");
 
 static void ConfigureMDBServices(IServiceCollection services)
 {

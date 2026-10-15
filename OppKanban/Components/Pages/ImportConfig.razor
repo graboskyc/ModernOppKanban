@@ -19,6 +19,11 @@
         <InputDate id="fiscal-year-start" @bind-Value="_fiscalYearStartDate" DateFormat="MM-dd" />
         <small>Stored as the fiscal year start month/day, defaulting to <code>feb1</code>.</small>
     </div>
+    <div>
+        <label for="tracked-email-domains">Tracked email domains</label>
+        <InputTextArea id="tracked-email-domains" @bind-Value="_trackedEmailDomainsText" />
+        <small>Enter one email domain per line, such as <code>example.com</code>.</small>
+    </div>
     <h2>Sales stages</h2>
     @foreach (var stage in _draft.SalesStages)
     {
@@ -59,6 +64,7 @@
 @code {
     private readonly ConfigSettings _draft = new();
     private DateTime _fiscalYearStartDate = new DateTime(2024, 2, 1);
+    private string _trackedEmailDomainsText = string.Empty;
     private bool _isSaving;
     private string _statusMessage = string.Empty;
     private string _statusClass = string.Empty;
@@ -67,6 +73,9 @@
     {
         _draft.SFDCLink = ConfigSettings.SFDCLink;
         _draft.FiscalYearStart = ConfigSettings.FiscalYearStart;
+        _draft.TrackedEmailDomains = ConfigSettings.TrackedEmailDomains
+            .ToList();
+        _trackedEmailDomainsText = string.Join(Environment.NewLine, _draft.TrackedEmailDomains);
         _fiscalYearStartDate = FiscalQuarterHelper.ParseFiscalYearStart(_draft.FiscalYearStart);
         _draft.SalesStages = ConfigSettings.SalesStages
             .Select(stage => new ConfigSettingSalesStage
@@ -102,6 +111,20 @@
             return;
         }
 
+        var trackedEmailDomains = _trackedEmailDomainsText
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(domain => domain.ToLowerInvariant())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (trackedEmailDomains.Any(domain => Uri.CheckHostName(domain) != UriHostNameType.Dns))
+        {
+            _statusMessage = "Enter valid email domains, one domain per line.";
+            _statusClass = "text-danger";
+            return;
+        }
+
+        _draft.TrackedEmailDomains = trackedEmailDomains;
+
         _isSaving = true;
         try
         {
@@ -130,6 +153,7 @@
 
             ConfigSettings.SFDCLink = _draft.SFDCLink;
             ConfigSettings.FiscalYearStart = _draft.FiscalYearStart;
+            ConfigSettings.TrackedEmailDomains = _draft.TrackedEmailDomains;
             ConfigSettings.SalesStages = _draft.SalesStages;
             ConfigSettings.LastEditTime = _draft.LastEditTime;
 

@@ -49,6 +49,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
       - MongoDb__ConnectionString=${MongoDb__ConnectionString:-mongodb://admin:admin@mongodb:27017/OppKanban?authSource=admin}
+      - Reranker__BaseUrl=${Reranker__BaseUrl:-http://llama-reranker:8000/}
     depends_on:
       setup-generator:
         condition: service_completed_successfully
@@ -56,6 +57,29 @@ services:
         condition: service_healthy
       mongot:
         condition: service_healthy
+    networks:
+      - oppkanban-network
+    restart: unless-stopped
+
+  llama-reranker:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    profiles:
+      - ai
+    volumes:
+      - llama-cache:/root/.cache/llama.cpp
+    command:
+      - -hf
+      - Voodisss/Qwen3-Reranker-0.6B-GGUF-llama_cpp:Q4_K_M
+      - --reranking
+      - --pooling
+      - rank
+      - --embedding
+      - --port
+      - "8000"
+      - --host
+      - 0.0.0.0
+    expose:
+      - "8000"
     networks:
       - oppkanban-network
     restart: unless-stopped
@@ -145,6 +169,8 @@ volumes:
   mongot-data:
     driver: local
   auth-files:
+    driver: local
+  llama-cache:
     driver: local
 
 networks:
