@@ -95,9 +95,8 @@
 						</tr>
 					}
 					<tr>
-						<td colspan="2">
-							<AIMeetingRerank SA="@Opportunity.OppDetails.PrimarySA" MeetingStartTime="@Opportunity.OppDetails.CreatedDate" MeetingEndTime="@DateTime.Now" OpportunityInformationQuery="String.Concat('Account: ', Opportunity.OppDetails.AccountName, ', Opportunity: ', Opportunity.OppDetails.OppName)" CutoffScore=0.1f />
-						</td>
+						<td><FluentIcon Value="@(new Icons.Regular.Size20.CalendarInfo())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td><AIMeetingRerank SA="@Opportunity.OppDetails.PrimarySA" MeetingStartTime="@Opportunity.OppDetails.CreatedDate" MeetingEndTime="@DateTime.Now" OpportunityInformationQuery="String.Concat(Opportunity.OppDetails.AccountName, ' - ', Opportunity.OppDetails.OppName)" CutoffScore=0.2f /></td>
 					</tr>
 				</tbody>
 			</table>

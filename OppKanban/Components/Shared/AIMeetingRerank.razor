@@ -137,7 +137,7 @@ else if (_rankedEvents.Count > 0)
             using var response = await client.PostAsJsonAsync(
                 requestUri,
                 new RerankRequest(
-                    OpportunityInformationQuery,
+                    $"Given the specified opportunity, rank the candidate meetings by how likely they are to be about that opportunity. The candidate list may contain meetings for many different opportunities; identify the best matching meetings for the specified opportunity.\n\nOpportunity: {OpportunityInformationQuery}",
                     events.Select(FormatEvent).ToList()),
                 cts.Token);
 
@@ -169,7 +169,7 @@ else if (_rankedEvents.Count > 0)
             var scoredEvents = rankedEvents.ToList();
             foreach (var result in scoredEvents)
             {
-                WriteDebug($"Result index={events.IndexOf(result.Event)}, score={result.Score:0.000000}, cutoff={CutoffScore:0.000}, passes={result.Score >= CutoffScore}.");
+                WriteDebug($"Result index={events.IndexOf(result.Event)}, event=\"{result.Event.MeetingName}\", score={result.Score:0.000000}, cutoff={CutoffScore:0.000}, passes={result.Score >= CutoffScore}.");
             }
 
             if (!IsCurrentRequest(cts))
