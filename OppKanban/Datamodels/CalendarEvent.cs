@@ -26,6 +26,10 @@ namespace OppKanban.Datamodels
 
         [BsonElement("date")]
         public string Date { get; set; } = "";
+        [BsonElement("meetingName")]
+        public string MeetingName { get; set; } = "";
+        [BsonElement("isPartnerOnly")]
+        public bool IsPartnerOnly { get; set; } = false;
 
         public string FirstName { 
             get

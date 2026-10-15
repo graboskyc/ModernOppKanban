@@ -10,7 +10,7 @@
 
 <h1>Import Time Tracking</h1>
 
-<p>Upload a CSV file with columns: <code>Email,Start Time ,End Time,DurationMin,DurationHours,cf,Date</code></p>
+<p>Upload a CSV file with columns: <code>Email,Start Time ,End Time,DurationMin,DurationHours,cf,Date,MeetingName,isPartnerOnly</code></p>
 
 <InputFile OnChange="HandleFileSelected" accept=".csv" />
 
@@ -90,7 +90,7 @@
                     continue;
                 }
 
-                var largestRequiredIndex = headerIndexes.Values.Max();
+                var largestRequiredIndex = requiredHeaders.Max(header => headerIndexes[header]);
                 if (parts.Length <= largestRequiredIndex)
                 {
                     _errors.Add($"Line {lineNumber}: expected at least {largestRequiredIndex + 1} columns, got {parts.Length}.");
@@ -98,6 +98,10 @@
                 }
 
                 string GetValue(string header) => parts[headerIndexes[header]].Trim();
+                string GetOptionalValue(string header) =>
+                    headerIndexes.TryGetValue(header, out var index) && parts.Length > index
+                        ? parts[index].Trim()
+                        : string.Empty;
 
                 var email = GetValue("Email");
                 var startTimeText = GetValue("StartTime");
@@ -106,6 +110,9 @@
                 var durationHoursText = GetValue("DurationHours");
                 var cfText = GetValue("cf");
                 var dateText = GetValue("Date");
+                var meetingName = GetOptionalValue("MeetingName");
+                var isPartnerOnlyText = GetOptionalValue("IsPartnerOnly");
+                var isPartnerOnly = false;
 
                 if (!DateTime.TryParse(startTimeText, CultureInfo.InvariantCulture, DateTimeStyles.None, out var startTime))
                 {
@@ -137,6 +144,12 @@
                     continue;
                 }
 
+                if (!string.IsNullOrWhiteSpace(isPartnerOnlyText) && !bool.TryParse(isPartnerOnlyText, out isPartnerOnly))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid isPartnerOnly value '{isPartnerOnlyText}'. Expected TRUE or FALSE.");
+                    continue;
+                }
+
                 events.Add(new CalendarEvent
                 {
                     Email = email,
@@ -145,7 +158,9 @@
                     DurationMin = durationMin,
                     DurationHours = durationHours,
                     CustomerFacing = cf,
-                    Date = dateText
+                    Date = dateText,
+                    MeetingName = meetingName,
+                    IsPartnerOnly = isPartnerOnly
                 });
             }
 
