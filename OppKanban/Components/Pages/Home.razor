@@ -38,7 +38,7 @@
 	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="65%" />
 
 	<div class="stack-vertical">
-		<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
+		<CloseYearFilter Quarters="CloseQuarters" SelectedQuarters="_selectedCloseQuarters" SelectedQuartersChanged="HandleCloseQuartersChangedAsync" />
 		<SAFilter SAs="SalesArchitects" SelectedSAs="_selectedSAs" SelectedSAsChanged="HandleSAsChangedAsync" />
 	</div>
 </div>
@@ -160,13 +160,13 @@ else
 	private const string ShowClosedStagesStorageKey = "opp-kanban:show-closed-stages";
 	private const string ShowRenewalStagesStorageKey = "opp-kanban:show-renewal-stages";
 	private const string ShowStarredOnlyStorageKey = "opp-kanban:show-starred-only";
-	private const string CloseYearsStorageKey = "opp-kanban:close-years";
+	private const string CloseQuartersStorageKey = "opp-kanban:close-quarters";
 	private const string SalesArchitectsStorageKey = "opp-kanban:sales-architects";
 	private bool _showClosedStages = true;
 	private bool _showRenewalStages = true;
 	private bool _showOnlyValidation;
 	private bool _showOnlyStarred;
-	private string[] _selectedCloseYears = Array.Empty<string>();
+	private string[] _selectedCloseQuarters = Array.Empty<string>();
 	private string[] _selectedSAs = Array.Empty<string>();
 	private OppBase? _selectedOpp;
 	private bool _isLoading = true;
@@ -205,10 +205,10 @@ else
 			_showOnlyStarred = showOnlyStarred;
 		}
 
-		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
-		if (storedCloseYears is not null)
+		var storedCloseQuarters = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseQuarters", CloseQuartersStorageKey);
+		if (storedCloseQuarters is not null)
 		{
-			_selectedCloseYears = storedCloseYears;
+			_selectedCloseQuarters = storedCloseQuarters;
 		}
 
 		var storedSAs = await JS.InvokeAsync<string[]?>("oppFilterStorage.getValue", SalesArchitectsStorageKey);
@@ -391,10 +391,10 @@ else
 		}
 	}
 
-	private IEnumerable<int> CloseYears => _opps
-		.Select(opp => opp.OppDetails.CloseDate.Year)
-		.Distinct()
-		.OrderByDescending(year => year);
+	private IEnumerable<string> CloseQuarters => _opps
+		.Select(opp => FiscalQuarterHelper.GetQuarterKey(opp.OppDetails.CloseDate, AppConfig.FiscalYearStart))
+		.Distinct(StringComparer.Ordinal)
+		.OrderByDescending(value => value);
 
 	private IEnumerable<string> SalesArchitects => _opps
 		.Select(opp => opp.OppDetails.PrimarySA)
@@ -403,21 +403,21 @@ else
 		.OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
 
 	private IEnumerable<OppView> FilteredOpps => _opps.Where(opp =>
-		(_selectedCloseYears.Length == 0
-			|| _selectedCloseYears.Contains(opp.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal))
+		(_selectedCloseQuarters.Length == 0
+			|| _selectedCloseQuarters.Contains(FiscalQuarterHelper.GetQuarterKey(opp.OppDetails.CloseDate, AppConfig.FiscalYearStart), StringComparer.Ordinal))
 		&& (_selectedSAs.Length == 0
 			|| _selectedSAs.Contains(opp.OppDetails.PrimarySA, StringComparer.Ordinal))
 		&& (!_showOnlyStarred || opp.OppMetadata?.IsStarred == true));
 
-	private async Task PersistCloseYearsAsync()
+	private async Task PersistCloseQuartersAsync()
 	{
-		await JS.InvokeVoidAsync("oppFilterStorage.setCloseYears", CloseYearsStorageKey, _selectedCloseYears);
+		await JS.InvokeVoidAsync("oppFilterStorage.setCloseQuarters", CloseQuartersStorageKey, _selectedCloseQuarters);
 	}
 
-	private async Task HandleCloseYearsChangedAsync(string[] selectedYears)
+	private async Task HandleCloseQuartersChangedAsync(string[] selectedQuarters)
 	{
-		_selectedCloseYears = selectedYears;
-		await PersistCloseYearsAsync();
+		_selectedCloseQuarters = selectedQuarters;
+		await PersistCloseQuartersAsync();
 	}
 
 	private async Task HandleSAsChangedAsync(string[] selectedSAs)

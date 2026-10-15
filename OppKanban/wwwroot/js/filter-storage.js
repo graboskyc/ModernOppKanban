@@ -36,9 +36,14 @@
         async getCloseYears(key) {
             return (await getValue(key)) ?? [];
         },
-
         async setCloseYears(key, years) {
             return setValue(key, years);
+        },
+        async getCloseQuarters(key) {
+            return (await getValue(key)) ?? [];
+        },
+        async setCloseQuarters(key, quarters) {
+            return setValue(key, quarters);
         },
     };
 })();

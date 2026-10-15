@@ -1,7 +1,9 @@
+@using OppKanban.Datamodels
+
 <div class="close-year-filter">
     @if (_isOpen)
     {
-        <button class="close-year-backdrop" type="button" aria-label="Close close year filter" @onclick="CloseDropdown"></button>
+        <button class="close-year-backdrop" type="button" aria-label="Close close quarter filter" @onclick="CloseDropdown"></button>
     }
 
     <button class="close-year-trigger" type="button" aria-expanded="@_isOpen" aria-haspopup="listbox" @onclick="ToggleOpen">
@@ -11,19 +13,19 @@
 
     @if (_isOpen)
     {
-        <div class="close-year-options" role="group" aria-label="Close years">
+        <div class="close-year-options" role="group" aria-label="Close quarters">
             <div class="close-year-actions">
                 <button class="close-year-action" type="button" @onclick="SelectAllAsync">Select all</button>
                 <button class="close-year-action" type="button" @onclick="ClearAllAsync">Clear all</button>
             </div>
 
-            @foreach (var year in Years.OrderByDescending(year => year))
+            @foreach (var quarter in Quarters.OrderByDescending(quarter => quarter))
             {
                 <label>
                     <input type="checkbox"
-                           checked="@IsSelected(year)"
-                           @onchange="() => ToggleYear(year)" />
-                    <span>@year</span>
+                           checked="@IsSelected(quarter)"
+                           @onchange="() => ToggleQuarter(quarter)" />
+                    <span>@FiscalQuarterHelper.GetQuarterLabel(quarter)</span>
                 </label>
             }
         </div>
@@ -32,21 +34,21 @@
 
 @code {
     [Parameter]
-    public IEnumerable<int> Years { get; set; } = Enumerable.Empty<int>();
+    public IEnumerable<string> Quarters { get; set; } = Enumerable.Empty<string>();
 
     [Parameter]
-    public string[] SelectedYears { get; set; } = Array.Empty<string>();
+    public string[] SelectedQuarters { get; set; } = Array.Empty<string>();
 
     [Parameter]
-    public EventCallback<string[]> SelectedYearsChanged { get; set; }
+    public EventCallback<string[]> SelectedQuartersChanged { get; set; }
 
     private bool _isOpen;
 
-    private string SelectionLabel => SelectedYears.Length == 0
-        ? "All close years"
-        : $"{SelectedYears.Length} close year{(SelectedYears.Length == 1 ? string.Empty : "s")} selected";
+    private string SelectionLabel => SelectedQuarters.Length == 0
+        ? "All close quarters"
+        : $"{SelectedQuarters.Length} close quarter{(SelectedQuarters.Length == 1 ? string.Empty : "s")} selected";
 
-    private bool IsSelected(int year) => SelectedYears.Contains(year.ToString(), StringComparer.Ordinal);
+    private bool IsSelected(string quarter) => SelectedQuarters.Contains(quarter, StringComparer.Ordinal);
 
     private void ToggleOpen()
     {
@@ -58,32 +60,30 @@
         _isOpen = false;
     }
 
-    private async Task ToggleYear(int year)
+    private async Task ToggleQuarter(string quarter)
     {
-        var selectedYears = SelectedYears.ToHashSet(StringComparer.Ordinal);
-        var yearValue = year.ToString();
+        var selectedQuarters = SelectedQuarters.ToHashSet(StringComparer.Ordinal);
 
-        if (!selectedYears.Add(yearValue))
+        if (!selectedQuarters.Add(quarter))
         {
-            selectedYears.Remove(yearValue);
+            selectedQuarters.Remove(quarter);
         }
 
-        await SelectedYearsChanged.InvokeAsync(selectedYears.OrderByDescending(value => value).ToArray());
+        await SelectedQuartersChanged.InvokeAsync(selectedQuarters.OrderByDescending(value => value).ToArray());
     }
 
     private async Task SelectAllAsync()
     {
-        var selectedYears = Years
-            .Select(year => year.ToString())
+        var selectedQuarters = Quarters
             .Distinct(StringComparer.Ordinal)
             .OrderByDescending(value => value)
             .ToArray();
 
-        await SelectedYearsChanged.InvokeAsync(selectedYears);
+        await SelectedQuartersChanged.InvokeAsync(selectedQuarters);
     }
 
     private async Task ClearAllAsync()
     {
-        await SelectedYearsChanged.InvokeAsync(Array.Empty<string>());
+        await SelectedQuartersChanged.InvokeAsync(Array.Empty<string>());
     }
 }

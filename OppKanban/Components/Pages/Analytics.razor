@@ -6,12 +6,13 @@
 @using MongoDB.Driver
 @inject IMongoCollection<OppView> OppCollection
 @inject IJSRuntime JS
+@inject IConfigSettings AppConfig
 
 <PageTitle>Analytics</PageTitle>
 
 <h1>Analytics</h1>
 
-<CloseYearFilter Years="CloseYears" SelectedYears="_selectedCloseYears" SelectedYearsChanged="HandleCloseYearsChangedAsync" />
+<CloseYearFilter Quarters="CloseQuarters" SelectedQuarters="_selectedCloseQuarters" SelectedQuartersChanged="HandleCloseQuartersChangedAsync" />
 
 @if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
@@ -56,8 +57,8 @@ else
 
 @code {
 	private readonly List<OppView> _opportunities = new();
-	private const string CloseYearsStorageKey = "opp-kanban:close-years";
-	private string[] _selectedCloseYears = Array.Empty<string>();
+	private const string CloseQuartersStorageKey = "opp-kanban:close-quarters";
+	private string[] _selectedCloseQuarters = Array.Empty<string>();
 	private int _chartsRenderVersion;
 	private bool _isLoading = true;
 	private string _errorMessage = string.Empty;
@@ -65,15 +66,15 @@ else
 	private string OwnershipChartKey(bool excludeClosed) => $"ownership-{excludeClosed}-{_chartsRenderVersion}";
 	private string WinLossChartKey => $"winloss-{_chartsRenderVersion}";
 
-	private IEnumerable<int> CloseYears => _opportunities
-		.Select(opportunity => opportunity.OppDetails.CloseDate.Year)
-		.Distinct()
-		.OrderByDescending(year => year);
+	private IEnumerable<string> CloseQuarters => _opportunities
+		.Select(opportunity => FiscalQuarterHelper.GetQuarterKey(opportunity.OppDetails.CloseDate, AppConfig.FiscalYearStart))
+		.Distinct(StringComparer.Ordinal)
+		.OrderByDescending(value => value);
 
-	private IEnumerable<OppView> FilteredOpportunities => _selectedCloseYears.Length == 0
+	private IEnumerable<OppView> FilteredOpportunities => _selectedCloseQuarters.Length == 0
 		? _opportunities
-		: _opportunities.Where(opportunity => _selectedCloseYears.Contains(
-			opportunity.OppDetails.CloseDate.Year.ToString(), StringComparer.Ordinal));
+		: _opportunities.Where(opportunity => _selectedCloseQuarters.Contains(
+			FiscalQuarterHelper.GetQuarterKey(opportunity.OppDetails.CloseDate, AppConfig.FiscalYearStart), StringComparer.Ordinal));
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -82,10 +83,10 @@ else
 			return;
 		}
 
-		var storedCloseYears = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseYears", CloseYearsStorageKey);
-		if (storedCloseYears is not null)
+		var storedCloseQuarters = await JS.InvokeAsync<string[]?>("oppFilterStorage.getCloseQuarters", CloseQuartersStorageKey);
+		if (storedCloseQuarters is not null)
 		{
-			_selectedCloseYears = storedCloseYears;
+			_selectedCloseQuarters = storedCloseQuarters;
 			_chartsRenderVersion++;
 		}
 
@@ -112,15 +113,15 @@ else
 		}
 	}
 
-	private async Task PersistCloseYearsAsync()
+	private async Task PersistCloseQuartersAsync()
 	{
-		await JS.InvokeVoidAsync("oppFilterStorage.setCloseYears", CloseYearsStorageKey, _selectedCloseYears);
+		await JS.InvokeVoidAsync("oppFilterStorage.setCloseQuarters", CloseQuartersStorageKey, _selectedCloseQuarters);
 	}
 
-	private async Task HandleCloseYearsChangedAsync(string[] selectedYears)
+	private async Task HandleCloseQuartersChangedAsync(string[] selectedQuarters)
 	{
-		_selectedCloseYears = selectedYears;
+		_selectedCloseQuarters = selectedQuarters;
 		_chartsRenderVersion++;
-		await PersistCloseYearsAsync();
+		await PersistCloseQuartersAsync();
 	}
 }
