@@ -69,7 +69,7 @@ services:
       - llama-cache:/root/.cache/llama.cpp
     command:
       - -hf
-      - Voodisss/Qwen3-Reranker-0.6B-GGUF-llama_cpp:Q4_K_M
+      - Voodisss/Qwen3-Reranker-${RERANKER_SIZE:-0.6B}-GGUF-llama_cpp:Q4_K_M
       - --reranking
       - --pooling
       - rank
