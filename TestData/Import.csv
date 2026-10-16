@@ -1,25 +1,25 @@
-Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR
-opp-001,Acme Corp,Acme Deal,Jane Doe,Mary Shelly,Discovery,1/15/2026,9/30/2026,100000
-opp-002,IHAC Inc,IHAC Deal,Bill Smith,Sofia Patel,Validation,2/15/2026,10/30/2026,250000
-opp-003,Bad Programmers Inc,Foo Deal,Frank Roberts,Robert Paulson,ClosedLost,3/15/2024,11/30/2024,75000
-opp-004,Bad Programmers Inc,Bar Deal,Frank Roberts,Liam Chen,ClosedWon,3/15/2026,11/30/2026,125000
-opp-005,Bad Programmers Inc,Baz Deal,Alice Nguyen,Robert Paulson,Discovery,4/2/2026,12/15/2026,180000
-opp-006,Contoso Ltd,Data Platform Expansion,Bill Smith,Mary Shelly,Validation,4/8/2026,1/20/2027,320000
-opp-007,Fabrikam,Security Assessment,Carlos Mendes,Sofia Patel,Scope,4/14/2026,12/5/2026,95000
-opp-008,Adventure Works,Analytics Modernization,Jane Doe,Hannah Ortiz,ClosedWon,4/21/2025,10/18/2025,210000
-opp-009,Tailspin Toys,Infrastructure Refresh,Elena Rossi,Robert Paulson,Discovery,5/3/2026,2/12/2027,145000
-opp-010,Woodgrove Bank,Customer Portal,Frank Roberts,Mary Shelly,Validation,5/9/2026,11/22/2026,275000
-opp-011,Proseware,Application Integration,Naomi Brooks,Sofia Patel,PreOnboarding,5/16/2026,1/8/2027,160000
-opp-012,Graphic Design Institute,Managed Services,Bill Smith,Grace Wilson,ClosedLost,5/23/2025,9/25/2025,85000
-opp-013,Lucerne Publishing,Workflow Automation,Marcus Lee,Robert Paulson,Discovery,6/1/2026,2/28/2027,125000
-opp-014,Fabrikam Residences,Network Optimization,Jane Doe,Mary Shelly,Validation,6/7/2026,12/19/2026,230000
-opp-015,Humongous Insurance,Claims Processing,David Kim,Liam Chen,Handover,6/14/2026,1/30/2027,410000
-opp-016,City Power and Light,Observability Rollout,Frank Roberts,Hannah Ortiz,ClosedWon,6/21/2026,11/14/2026,195000
-opp-017,Coho Winery,Point of Sale Upgrade,Alice Nguyen,Robert Paulson,Discovery,7/2/2026,3/15/2027,70000
-opp-018,Alpine Ski House,Digital Workplace,Bill Smith,Grace Wilson,Validation,7/9/2026,2/5/2027,155000
-opp-019,Wide World Importers,Supply Chain Insights,Carlos Mendes,Sofia Patel,Scope,7/16/2026,1/17/2027,360000
-opp-020,Consolidated Messenger,API Gateway,Jane Doe,Mary Shelly,ClosedLost,7/24/2026,10/31/2026,110000
-opp-021,Fourth Coffee,Identity Modernization,Elena Rossi,Liam Chen,Discovery,8/1/2026,3/22/2027,205000
-opp-022,Blue Yonder Airlines,Revenue Forecasting,Marcus Lee,Hannah Ortiz,Validation,8/8/2026,2/26/2027,285000
-opp-023,Southridge Video,Media Archive,David Kim,Robert Paulson,PreOnboarding,8/15/2026,1/25/2027,135000
-opp-024,School of Fine Art,Learning Management,Naomi Brooks,Grace Wilson,ClosedWon,8/22/2026,12/12/2026,175000
+Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR,Notes
+opp-001,Acme Corp,Acme Deal,Jane Doe,Mary Shelly,Discovery,1/15/2026,9/30/2026,100000,Initial discovery completed; confirm current reporting workflow and key stakeholders.
+opp-002,IHAC Inc,IHAC Deal,Bill Smith,Sofia Patel,Validation,2/15/2026,10/30/2026,250000,Technical validation is underway; customer requested a security review before approval.
+opp-003,Bad Programmers Inc,Foo Deal,Frank Roberts,Robert Paulson,ClosedLost,3/15/2024,11/30/2024,75000,Closed after the customer selected an incumbent vendor; revisit at next budget cycle.
+opp-004,Bad Programmers Inc,Bar Deal,Frank Roberts,Liam Chen,ClosedWon,3/15/2026,11/30/2026,125000,Agreement signed; coordinate kickoff and confirm implementation resources.
+opp-005,Bad Programmers Inc,Baz Deal,Alice Nguyen,Robert Paulson,Discovery,4/2/2026,12/15/2026,180000,Customer is evaluating options; schedule a follow-up with the operations team.
+opp-006,Contoso Ltd,Data Platform Expansion,Bill Smith,Mary Shelly,Validation,4/8/2026,1/20/2027,320000,Review migration approach and validate data-volume assumptions with engineering.
+opp-007,Fabrikam,Security Assessment,Carlos Mendes,Sofia Patel,Scope,4/14/2026,12/5/2026,95000,"Draft assessment scope, confirm system access requirements, and identify compliance stakeholders."
+opp-008,Adventure Works,Analytics Modernization,Jane Doe,Hannah Ortiz,ClosedWon,4/21/2025,10/18/2025,210000,Project completed successfully; use the rollout as a reference for future opportunities.
+opp-009,Tailspin Toys,Infrastructure Refresh,Elena Rossi,Robert Paulson,Discovery,5/3/2026,2/12/2027,145000,Collect current infrastructure inventory and confirm preferred maintenance window.
+opp-010,Woodgrove Bank,Customer Portal,Frank Roberts,Mary Shelly,Validation,5/9/2026,11/22/2026,275000,Validate identity integration requirements and align the proposal with bank security controls.
+opp-011,Proseware,Application Integration,Naomi Brooks,Sofia Patel,PreOnboarding,5/16/2026,1/8/2027,160000,Prepare onboarding checklist and confirm the customer integration lead.
+opp-012,Graphic Design Institute,Managed Services,Bill Smith,Grace Wilson,ClosedLost,5/23/2025,9/25/2025,85000,Opportunity closed after funding was deferred; maintain contact for the next planning cycle.
+opp-013,Lucerne Publishing,Workflow Automation,Marcus Lee,Robert Paulson,Discovery,6/1/2026,2/28/2027,125000,Map the editorial approval process and identify the first automation use case.
+opp-014,Fabrikam Residences,Network Optimization,Jane Doe,Mary Shelly,Validation,6/7/2026,12/19/2026,230000,Compare proposed network design with the latest site and bandwidth requirements.
+opp-015,Humongous Insurance,Claims Processing,David Kim,Liam Chen,Handover,6/14/2026,1/30/2027,410000,Transition the signed scope to delivery and confirm claims-system access with the customer.
+opp-016,City Power and Light,Observability Rollout,Frank Roberts,Hannah Ortiz,ClosedWon,6/21/2026,11/14/2026,195000,Rollout approved; share the monitoring plan and establish operational success metrics.
+opp-017,Coho Winery,Point of Sale Upgrade,Alice Nguyen,Robert Paulson,Discovery,7/2/2026,3/15/2027,70000,Document store count and point-of-sale hardware before preparing the solution outline.
+opp-018,Alpine Ski House,Digital Workplace,Bill Smith,Grace Wilson,Validation,7/9/2026,2/5/2027,155000,Confirm seasonal staffing needs and test connectivity at representative locations.
+opp-019,Wide World Importers,Supply Chain Insights,Carlos Mendes,Sofia Patel,Scope,7/16/2026,1/17/2027,360000,Define priority data sources, reporting audiences, and the initial delivery milestones.
+opp-020,Consolidated Messenger,API Gateway,Jane Doe,Mary Shelly,ClosedLost,7/24/2026,10/31/2026,110000,Customer paused the project pending an architecture review; follow up next quarter.
+opp-021,Fourth Coffee,Identity Modernization,Elena Rossi,Liam Chen,Discovery,8/1/2026,3/22/2027,205000,Assess the existing identity provider and capture requirements for phased migration.
+opp-022,Blue Yonder Airlines,Revenue Forecasting,Marcus Lee,Hannah Ortiz,Validation,8/8/2026,2/26/2027,285000,Validate forecast inputs with finance and document model governance expectations.
+opp-023,Southridge Video,Media Archive,David Kim,Robert Paulson,PreOnboarding,8/15/2026,1/25/2027,135000,Confirm archive inventory, retention requirements, and the onboarding schedule.
+opp-024,School of Fine Art,Learning Management,Naomi Brooks,Grace Wilson,ClosedWon,8/22/2026,12/12/2026,175000,Contract signed; align course migration dates with the academic calendar.

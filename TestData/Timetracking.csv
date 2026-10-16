@@ -1,3 +1,3 @@
-Email,Start Time ,End Time,DurationMin,DurationHours,cf,Date
-foo@bar.com,9/11/2026 11:00:00,9/11/2026 12:00:00,60,1,FALSE,2026-09-11
-foo@bar.com,9/18/2026 11:00:00,9/18/2026 12:00:00,60,1,TRUE,2026-09-18
+Email,Start Time,End Time,DurationMin,DurationHours,cf,Date,MeetingName,IsPartnerOnly
+foo@bar.com,9/11/2026 11:00:00,9/11/2026 12:00:00,60,1,FALSE,2026-09-11,Internal opportunity review,FALSE
+foo@bar.com,9/18/2026 11:00:00,9/18/2026 12:00:00,60,1,TRUE,2026-09-18,Customer architecture workshop,TRUE
