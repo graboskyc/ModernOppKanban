@@ -18,21 +18,56 @@
 <div class="kanban-page-header">
 	@if(!_showOnlyValidation) {
 		<div class="stack-vertical">
-			<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
-				@(_showClosedStages ? "Hide closed stages" : "Show closed stages")
-			</button>
-			<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-				@(_showRenewalStages ? "Hide renewals" : "Show renewals")
-			</button>
+			@if(_showClosedStages)
+			{
+				<button class="closed-stages-toggle secondary" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
+					Hide closed stages
+				</button>
+			} else
+			{
+				<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showClosedStages)" @onclick="ToggleClosedStages">
+					Show closed stages
+				</button>
+			}
+
+			@if(_showRenewalStages)
+			{
+				<button class="closed-stages-toggle secondary" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
+					Hide renewals
+				</button>
+			} else
+			{
+				<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
+					Show renewals
+				</button>
+			}				
+
 		</div>
 	}
 	<div class="stack-vertical">
-		<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
-			@(_showOnlyValidation ? "Show all stages" : "Show only validation")
-		</button>
-		<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
-			@(_showOnlyStarred ? "Show all star status" : "Show only starred")
-		</button>
+		@if(_showOnlyValidation)
+		{
+			<button class="closed-stages-toggle secondary" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
+				Show all stages
+			</button>
+		} else
+		{
+			<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
+				Show only validation
+			</button>
+		}
+
+		@if(_showOnlyStarred)
+		{
+			<button class="closed-stages-toggle secondary" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
+				Show all star status
+			</button>
+		} else
+		{
+			<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
+				Show only starred
+			</button>
+		}
 	</div>
 
 	<OpportunitySearch OnOpportunitySelected="HandleOpportunitySelectedAsync" Width="65%" />
