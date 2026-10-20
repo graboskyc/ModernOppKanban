@@ -158,11 +158,17 @@ else
 							<StageDiagram CurrentStage="@opp.GetStageName()" Width="100%" Height="70px" />
 
 							<footer class="opportunity-card-footer">
-								<span>
-									<FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
-									@opp.OppDetails.CloseDate.ToString("yyyy-MM-dd")
-								</span>
-								<span>@((DateTime.Now - opp.OppDetails.CreatedDate).Days)d old</span>
+								<div class="opportunity-card-footer-row">
+									<span>
+										<FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+										@opp.OppDetails.CloseDate.ToString("yyyy-MM-dd")
+									</span>
+									<span>@((DateTime.Now - opp.OppDetails.CreatedDate).Days)d old</span>
+								</div>
+								<div class="opportunity-card-footer-row opportunity-irr">
+									<span>IRR</span>
+									<span>@opp.OppDetails.Irr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</span>
+								</div>
 							</footer>
 						</article>
 					}

@@ -10,7 +10,7 @@
 
 <h1>Import Opportunities</h1>
 
-<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR,Notes</code></p>
+<p>Upload a CSV file with columns: <code>Id,AccountName,OppName,OpportunityOwner,PrimarySA,Status,CreatedDate,CloseDate,ERR,IRR,Notes</code></p>
 
 <InputFile OnChange="HandleFileSelected" accept=".csv" />
 
@@ -68,9 +68,9 @@
                     continue;
                 }
 
-                if (parts.Length < 10)
+                if (parts.Length < 11)
                 {
-                    _errors.Add($"Line {lineNumber}: expected 10 columns, got {parts.Length}.");
+                    _errors.Add($"Line {lineNumber}: expected 11 columns, got {parts.Length}.");
                     continue;
                 }
 
@@ -95,6 +95,15 @@
                     continue;
                 }
 
+                var irrText = parts[9].Trim();
+                var irr = 0m;
+                if (irrText.Length > 0 &&
+                    !decimal.TryParse(irrText, NumberStyles.Number, CultureInfo.InvariantCulture, out irr))
+                {
+                    _errors.Add($"Line {lineNumber}: invalid IRR '{irrText}'.");
+                    continue;
+                }
+
                 opps.Add(new OppBase
                 {
                     Id = parts[0].Trim(),
@@ -106,7 +115,8 @@
                     CreatedDate = createdDate,
                     CloseDate = closeDate,
                     Err = err,
-                    Notes = parts[9].Trim()
+                    Irr = irr,
+                    Notes = parts[10].Trim()
                 });
             }
 
