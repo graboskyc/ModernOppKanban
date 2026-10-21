@@ -51,8 +51,8 @@
 						<td>@Opportunity.OppDetails.PrimarySA</td>
 					</tr>
 					<tr>
-						<td title="ERR"><FluentIcon Value="@(new Icons.Regular.Size20.Money())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
-						<td>@Opportunity.OppDetails.Err.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
+						<td title="ERR / IRR"><FluentIcon Value="@(new Icons.Regular.Size20.Money())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
+						<td><span style="font-weight: bold;color: #e48500;">ERR:</span> @Opportunity.OppDetails.Err.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US")) / <span style="font-weight: bold;color: #e48500;">IRR:</span> @Opportunity.OppDetails.Irr.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
 					</tr>
 					<tr>
 						<td title="Close Date"><FluentIcon Value="@(new Icons.Regular.Size20.CalendarStar())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></td>
