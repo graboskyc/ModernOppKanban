@@ -27,8 +27,7 @@
 
 				<article>
 
-					<details name="basics">
-						<summary>Basics <small><i>(click to toggle)</i></small></summary>
+					<Accordion Title="Basics">
 						
 						<label for="sa-likelihood">SA likelihood <small>@_metadataDraft.SaLikelihood.ToString("0")%</small></label>
 						<input id="sa-likelihood" type="range" min="0" max="100" step="5" @bind="_metadataDraft.SaLikelihood" />
@@ -47,10 +46,10 @@
 								<FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#000000" />
 							</button>
 						</div>
-					</details>
+					</Accordion>
 
 					@if (_metadataDraft.Assets.Count != 0)	{
-						<details name="assets">
+						<Accordion Title="Assets">
 							<summary>Assets <small><i>(click to toggle)</i></small></summary>
 								<table><tbody>
 									@foreach (var asset in _metadataDraft.Assets)
@@ -65,11 +64,10 @@
 										</tr>
 									}
 								</tbody></table>
-						</details>
+						</Accordion>
 					}
 
-					<details name="launch-events">
-						<summary>Go Live Journey <small><i>(click to toggle)</i></small></summary>
+					<Accordion Title="Go Live Journey">
 
 						<label for="event-name">Go Live Journey</label>
 						<div role="group">
@@ -97,11 +95,9 @@
 								}
 							</tbody></table>
 						}
-					</details>
+					</Accordion>
 
-					<details name="technical-champions">
-						<summary>Technical Champions <small><i>(click to toggle)</i></small></summary>
-				
+					<Accordion Title="Technical Champions">
 						<label for="technical-champion-name">Technical Champions</label>
 						<div role="group">
 							<div class="feedback-lookup">
@@ -151,10 +147,9 @@
 								}
 							</tbody></table>
 						}
-					</details>
+					</Accordion>
 
-					<details name="meddpicc">
-						<summary>MEDDPICC <small><i>(click to toggle)</i></small></summary>
+					<Accordion Title="MEDDPICC">
 						<table class="table" style="text-align: center;">
 							<thead class="thead-dark">
 								<tr>
@@ -181,11 +176,9 @@
 								</tr>
 							</tbody>
 						</table>
-					</details>
+					</Accordion>
 
-					<details name="feedback">
-						<summary>Feedback <small><i>(click to toggle)</i></small></summary>
-						<label for="feedback-link">Feedback Item</label>
+					<Accordion Title="Feedback">
 						<div role="group">
 							<div class="feedback-lookup">
 								<input id="feedback-id" type="text" placeholder="Feedback ID"
@@ -234,10 +227,9 @@
 								}
 							</tbody></table>
 						}
-					</details>
+					</Accordion>
 
-					<details name="notes">
-						<summary>Notes <small><i>(click to toggle)</i></small></summary>
+					<Accordion Title="Notes">
 					
 						<button type="button" class="secondary" @onclick="ToggleNotesPreview">
 							@(_isPreviewingNotes ? "Edit" : "Preview")
@@ -250,7 +242,7 @@
 						{
 							<textarea rows="5" @bind="_metadataDraft.MEDDPICC.MEDDPICC_Notes" @bind:event="oninput"></textarea>
 						}
-					</details>
+					</Accordion>
 				</article>
 
 				<footer>

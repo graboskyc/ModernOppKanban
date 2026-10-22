@@ -33,12 +33,12 @@
 			@if(_showRenewalStages)
 			{
 				<button class="closed-stages-toggle secondary" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-					Hide renewals
+					Hide renewals ( @RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
 				</button>
 			} else
 			{
 				<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-					Show renewals
+					Show renewals ( @RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
 				</button>
 			}				
 
@@ -53,19 +53,19 @@
 		} else
 		{
 			<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyValidation" @onclick="ToggleValidationOnly">
-				Show only validation
+				Show only validation ( @ValidationOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
 			</button>
 		}
 
 		@if(_showOnlyStarred)
 		{
 			<button class="closed-stages-toggle secondary" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
-				Show all star status — Starred IRR: @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+				Show all star status ( @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
 			</button>
 		} else
 		{
 			<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
-				Show only starred — Starred IRR: @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+				Show only starred ( @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
 			</button>
 		}
 	</div>
@@ -452,6 +452,16 @@ else
 
 	private decimal StarredOppsIrr => _opps
 		.Where(opp => opp.OppMetadata?.IsStarred == true)
+		.Sum(opp => opp.OppDetails.Irr);
+
+	private decimal RenewalOppsIrr => _opps
+		.Where(opp => StageHelper.GetAllStages(AppConfig)
+			.Any(stage => stage.IsRenewalStage && StageHelper.IsSameStage(opp.GetStageName(), stage)))
+		.Sum(opp => opp.OppDetails.Irr);
+
+	private decimal ValidationOppsIrr => _opps
+		.Where(opp => StageHelper.GetAllStages(AppConfig)
+			.Any(stage => stage.IsValidationStage && StageHelper.IsSameStage(opp.GetStageName(), stage)))
 		.Sum(opp => opp.OppDetails.Irr);
 
 	private async Task PersistCloseQuartersAsync()

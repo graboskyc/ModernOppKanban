@@ -27,8 +27,7 @@
     <h2>Sales stages</h2>
     @foreach (var stage in _draft.SalesStages)
     {
-        <details>
-            <summary role="button">@stage.StageName <small><i>(click to toggle)</i></small></summary>
+        <Accordion Title="@stage.StageName">
             <article data-theme="light">
                 <label>
                     Stage name
@@ -47,7 +46,7 @@
                 </fieldset>
                 <button type="button" class="secondary" @onclick="() => RemoveStage(stage)">Remove stage</button>
             </article>
-        </details>
+        </Accordion>
     }
     <button type="button" class="secondary" @onclick="AddStage">Add stage</button>
     <p>Last edited: @_draft.LastEditTime.ToLocalTime().ToString("g")</p>
