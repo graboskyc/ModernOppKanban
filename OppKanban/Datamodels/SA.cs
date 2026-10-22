@@ -68,6 +68,8 @@ namespace OppKanban.Datamodels
         public SATalent Talent {get;set;} = SATalent.ShowsPotential;
         [BsonElement("risk")]
         public SARisk Risk {get;set;} = SARisk.Standard;
+        [BsonElement("isArchived")]
+        public bool IsArchived {get;set;} = false;
 
     }
 }

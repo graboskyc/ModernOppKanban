@@ -60,12 +60,12 @@
 		@if(_showOnlyStarred)
 		{
 			<button class="closed-stages-toggle secondary" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
-				Show all star status
+				Show all star status — Starred IRR: @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
 			</button>
 		} else
 		{
 			<button class="closed-stages-toggle" type="button" aria-pressed="@_showOnlyStarred" @onclick="ToggleStarredOnly">
-				Show only starred
+				Show only starred — Starred IRR: @StarredOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
 			</button>
 		}
 	</div>
@@ -449,6 +449,10 @@ else
 		&& (_selectedSAs.Length == 0
 			|| _selectedSAs.Contains(opp.OppDetails.PrimarySA, StringComparer.Ordinal))
 		&& (!_showOnlyStarred || opp.OppMetadata?.IsStarred == true));
+
+	private decimal StarredOppsIrr => _opps
+		.Where(opp => opp.OppMetadata?.IsStarred == true)
+		.Sum(opp => opp.OppDetails.Irr);
 
 	private async Task PersistCloseQuartersAsync()
 	{

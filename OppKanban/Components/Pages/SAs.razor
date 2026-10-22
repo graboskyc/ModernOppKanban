@@ -25,43 +25,93 @@ else if (_sas.Count == 0)
 else
 {
     <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Title</th>
-                    <th>Info</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var sa in _sas)
-                {
+        @if (ActiveSAs.Any())
+        {
+            <table>
+                <thead>
                     <tr>
-                        <td><SAProfileImage SAId="@sa.Id" AltText="@sa.Name" /></td>
-                        <td>
-                            <span>@sa.Name</span>
-                            @if (IsStartDateCelebrationPeriod(sa))
-                            {
-                                <span title="Anniversary Date: @sa.HireDate.ToShortDateString()"> 🎉</span>
-                            }
-                        </td>
-                        <td>@sa.Title</td>
-                        <td>
-                            @if(!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
-                            {
-                                <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button" >
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.DocumentOnePage())" />
-                                </a>
-                            }
-                            <button type="button" aria-label="Edit @sa.Name" title="Edit @sa.Name" @onclick="() => OpenEditModal(sa)">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
-                            </button>
-                        </td>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Title</th>
+                        <th>Info</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var sa in ActiveSAs)
+                    {
+                        <tr>
+                            <td><SAProfileImage SAId="@sa.Id" AltText="@sa.Name" /></td>
+                            <td>
+                                <span>@sa.Name</span>
+                                @if (IsStartDateCelebrationPeriod(sa))
+                                {
+                                    <span title="Anniversary Date: @sa.HireDate.ToShortDateString()"> 🎉</span>
+                                }
+                            </td>
+                            <td>@sa.Title</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
+                                {
+                                    <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentOnePage())" />
+                                    </a>
+                                }
+                                <button type="button" aria-label="Edit @sa.Name" title="Edit @sa.Name" @onclick="() => OpenEditModal(sa)">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>No active SAs.</p>
+        }
+
+        @if (ArchivedSAs.Any())
+        {
+            <Accordion Title="Archived SAs">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Title</th>
+                            <th>Info</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sa in ArchivedSAs)
+                        {
+                            <tr>
+                                <td><SAProfileImage SAId="@sa.Id" AltText="@sa.Name" /></td>
+                                <td>
+                                    <span>@sa.Name</span>
+                                    @if (IsStartDateCelebrationPeriod(sa))
+                                    {
+                                        <span title="Anniversary Date: @sa.HireDate.ToShortDateString()"> 🎉</span>
+                                    }
+                                </td>
+                                <td>@sa.Title</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
+                                    {
+                                        <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.DocumentOnePage())" />
+                                        </a>
+                                    }
+                                    <button type="button" aria-label="Edit @sa.Name" title="Edit @sa.Name" @onclick="() => OpenEditModal(sa)">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </Accordion>
+        }
     </div>
 }
 
@@ -73,6 +123,9 @@ else
     private string _errorMessage = string.Empty;
     private SA? _selectedSA;
     private bool _isCreatingSA;
+
+    private IEnumerable<SA> ActiveSAs => _sas.Where(sa => !sa.IsArchived);
+    private IEnumerable<SA> ArchivedSAs => _sas.Where(sa => sa.IsArchived);
 
     protected override async Task OnInitializedAsync()
     {

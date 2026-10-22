@@ -32,6 +32,11 @@
             <label for="sa-title">Title</label>
             <input id="sa-title" type="text" @bind="_draft.Title" />
 
+            <label for="sa-archived">
+                <input id="sa-archived" type="checkbox" @bind="_draft.IsArchived" />
+                Archive this SA
+            </label>
+
             <label for="sa-one-on-one">One-on-one document</label>
             <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
 
@@ -152,6 +157,7 @@
             SfdcName = SA.SfdcName,
             LinkToOneOnOneDoc = SA.LinkToOneOnOneDoc,
             Title = SA.Title,
+            IsArchived = SA.IsArchived,
             HireDate = SA.HireDate,
             LastPromoDate = SA.LastPromoDate,
             NextPromoDateProjected = SA.NextPromoDateProjected,
@@ -234,6 +240,7 @@
                     .Set(sa => sa.SfdcName, _draft.SfdcName)
                     .Set(sa => sa.LinkToOneOnOneDoc, _draft.LinkToOneOnOneDoc)
                     .Set(sa => sa.Title, _draft.Title)
+                    .Set(sa => sa.IsArchived, _draft.IsArchived)
                     .Set(sa => sa.HireDate, _draft.HireDate)
                     .Set(sa => sa.LastPromoDate, _draft.LastPromoDate)
                     .Set(sa => sa.NextPromoDateProjected, _draft.NextPromoDateProjected)

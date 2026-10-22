@@ -1,0 +1,26 @@
+details > summary[role="button"] {
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+details > summary[role="button"]::-webkit-details-marker {
+    display: none;
+}
+
+details[open] {
+    padding: 0;
+}
+
+details[open] > .accordion-content {
+    padding: 1rem;
+    border: 2px solid var(--pico-primary-background);
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+
+details[open] > summary[role="button"] {
+    margin-bottom: 0;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
