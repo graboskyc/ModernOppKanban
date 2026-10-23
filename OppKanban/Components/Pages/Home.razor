@@ -33,12 +33,20 @@
 			@if(_showRenewalStages)
 			{
 				<button class="closed-stages-toggle secondary" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-					Hide renewals ( @RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
+					Hide renewals ( 
+						<span title="Positive IRR Upside: @PositiveRenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))">
+							@RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+						</span>
+					)
 				</button>
 			} else
 			{
 				<button class="closed-stages-toggle" type="button" aria-pressed="@(!_showRenewalStages)" @onclick="ToggleRenewalStages">
-					Show renewals ( @RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US")) )
+					Show renewals ( 
+						<span title="Positive IRR Upside: @PositiveRenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))">
+							@RenewalOppsIrr.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+						</span>
+					)
 				</button>
 			}				
 
@@ -457,6 +465,12 @@ else
 	private decimal RenewalOppsIrr => _opps
 		.Where(opp => StageHelper.GetAllStages(AppConfig)
 			.Any(stage => stage.IsRenewalStage && StageHelper.IsSameStage(opp.GetStageName(), stage)))
+		.Sum(opp => opp.OppDetails.Irr);
+
+	private decimal PositiveRenewalOppsIrr => _opps
+		.Where(opp => opp.OppDetails.Irr > 0
+			&& StageHelper.GetAllStages(AppConfig)
+				.Any(stage => stage.IsRenewalStage && StageHelper.IsSameStage(opp.GetStageName(), stage)))
 		.Sum(opp => opp.OppDetails.Irr);
 
 	private decimal ValidationOppsIrr => _opps

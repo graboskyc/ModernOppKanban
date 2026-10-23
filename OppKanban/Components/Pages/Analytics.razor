@@ -48,10 +48,14 @@ else
 		<Chart_TimeTracking ChartType="ThisWeek" Title="This Week" MaxXValue=35 ReferenceLineValue=10  />
 		<Chart_TimeTracking ChartType="ProjectedNextWeek" Title="Projected Next Week" MaxXValue=35 ReferenceLineValue=10 />
 	</div>
+
+	<div class="grid">
+		<Chart_TimeTracking ChartType="LastMonth" Title="Last Month" />
+	</div>
 	
 	<div class="grid">
 		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
-		<Chart_TimeTracking ChartType="LastMonth" Title="Last Month" />
+		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
 	</div>
 
 	<div class="grid">

@@ -8,7 +8,7 @@
     }
     else
     {
-        <ApexChart TItem="StageCount" Title="Opportunities by stage">
+        <ApexChart TItem="StageCount" Title="@(ExcludeClosed ? "Open Opportunities by stage" : "Opportunities by stage")">
             <ApexPointSeries TItem="StageCount"
                             Items="_stageCounts"
                             Name="Opportunities"
@@ -23,6 +23,9 @@
 	[Parameter]
     public IEnumerable<OppView> Opportunities { get; set; } = Enumerable.Empty<OppView>();
 
+	[Parameter]
+	public bool ExcludeClosed { get; set; }
+
 	private readonly List<StageCount> _stageCounts = new();
 
 	protected override void OnParametersSet()
@@ -30,9 +33,21 @@
 		_stageCounts.Clear();
 		var opportunities = Opportunities.ToList();
 
-			_stageCounts.AddRange(StageHelper.GetAllStages(AppConfig).Select(stage => new StageCount(
-				StageHelper.GetStageName(stage),
-				opportunities.Count(opportunity => StageHelper.IsSameStage(opportunity.GetStageName(), stage)))));
+		if (ExcludeClosed)
+		{
+			var closedStages = StageHelper.GetAllStages(AppConfig)
+				.Where(stage => stage.IsWonStage || stage.IsClosedLostStage)
+				.ToList();
+			opportunities = opportunities
+				.Where(opportunity => !closedStages.Any(stage =>
+					StageHelper.IsSameStage(opportunity.GetStageName(), stage)))
+				.ToList();
+		}
+
+		var stages = StageHelper.GetAllStages(AppConfig);
+		_stageCounts.AddRange(stages.Select(stage => new StageCount(
+			StageHelper.GetStageName(stage),
+			opportunities.Count(opportunity => StageHelper.IsSameStage(opportunity.GetStageName(), stage)))));
 	}
 
 	private sealed record StageCount(string Name, int Count);
