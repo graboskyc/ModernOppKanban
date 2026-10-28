@@ -70,6 +70,7 @@ namespace OppKanban.Datamodels
         public SARisk Risk {get;set;} = SARisk.Standard;
         [BsonElement("isArchived")]
         public bool IsArchived {get;set;} = false;
-
+        [BsonElement("alignment")]
+        public List<string> Alignment {get;set;} = new List<string>();
     }
 }

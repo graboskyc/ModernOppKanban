@@ -23,86 +23,111 @@
             <label for="sa-name">Name</label>
             <input id="sa-name" type="text" @bind="_draft.Name" />
 
-            <label for="sa-email">Email address</label>
-            <input id="sa-email" type="email" @bind="_draft.Email" />
+            <Accordion Title="Profile">
 
-            <label for="sa-sfdc-name">SFDC name</label>
-            <input id="sa-sfdc-name" type="text" @bind="_draft.SfdcName" />
+                <label for="sa-email">Email address</label>
+                <input id="sa-email" type="email" @bind="_draft.Email" />
 
-            <label for="sa-title">Title</label>
-            <input id="sa-title" type="text" @bind="_draft.Title" />
+                <label for="sa-sfdc-name">SFDC name</label>
+                <input id="sa-sfdc-name" type="text" @bind="_draft.SfdcName" />
 
-            <label for="sa-archived">
-                <input id="sa-archived" type="checkbox" @bind="_draft.IsArchived" />
-                Archive this SA
-            </label>
+                <label for="sa-title">Title</label>
+                <input id="sa-title" type="text" @bind="_draft.Title" />
 
-            <label for="sa-one-on-one">One-on-one document</label>
-            <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
+                <label for="sa-archived">
+                    <input id="sa-archived" type="checkbox" @bind="_draft.IsArchived" />
+                    Archive this SA
+                </label>
 
-            <label for="sa-profile-image">Profile image</label>
-            <InputFile id="sa-profile-image" OnChange="HandleImageSelected" accept="image/jpeg,image/jpg,image/png" />
-            @if (_isCropping)
-            {
-                <dialog open>
-                    <article>
-                        <header>Crop profile image</header>
-                        <Cropper
-                            ImageFile="_selectedImage"
-                            PureCSharpProcessing="true"
-                            MaxCropedHeight="500"
-                            CropperHeight="400"
-                            MaxCropedWidth="500"
-                            RequireAspectRatio="true"
-                            AspectRatio="1"
-                            @ref="_cropper" />
-                        <footer>
-                            <button type="button" class="secondary" @onclick="CancelCropAsync">Cancel</button>
-                            <button type="button" @onclick="CompleteCropAsync">Use cropped image</button>
-                        </footer>
-                    </article>
-                </dialog>
-            }
-            else if (_selectedImage is not null)
-            {
-                <small>@_selectedImage.Name (cropped)</small>
-            }
-
-            <label for="sa-hire-date">Hire date</label>
-            <input id="sa-hire-date" type="date" @bind="_draft.HireDate" />
-
-            <label for="sa-last-promo-date">Last promotion date</label>
-            <input id="sa-last-promo-date" type="date" @bind="_draft.LastPromoDate" />
-
-            <label for="sa-next-promo-date">Projected next promotion date</label>
-            <input id="sa-next-promo-date" type="date" @bind="_draft.NextPromoDateProjected" />
-
-            <label for="sa-happiness">Current happiness</label>
-            <input id="sa-happiness" type="range" min="0" max="5" step="0.1" @bind="_draft.CurrentHappyiness" />
-
-            <label for="sa-si">Current SI</label>
-            <select id="sa-si" @bind="_draft.CurrentSI">
-                @foreach (var si in Enum.GetValues<SASI>())
+                <label for="sa-profile-image">Profile image</label>
+                <InputFile id="sa-profile-image" OnChange="HandleImageSelected" accept="image/jpeg,image/jpg,image/png" />
+                @if (_isCropping)
                 {
-                    <option value="@si">@si</option>
+                    <dialog open>
+                        <article>
+                            <header>Crop profile image</header>
+                            <Cropper
+                                ImageFile="_selectedImage"
+                                PureCSharpProcessing="true"
+                                MaxCropedHeight="500"
+                                CropperHeight="400"
+                                MaxCropedWidth="500"
+                                RequireAspectRatio="true"
+                                AspectRatio="1"
+                                @ref="_cropper" />
+                            <footer>
+                                <button type="button" class="secondary" @onclick="CancelCropAsync">Cancel</button>
+                                <button type="button" @onclick="CompleteCropAsync">Use cropped image</button>
+                            </footer>
+                        </article>
+                    </dialog>
                 }
-            </select>
-
-            <label for="sa-talent">Talent</label>
-            <select id="sa-talent" @bind="_draft.Talent">
-                @foreach (var talent in Enum.GetValues<SATalent>())
+                else if (_selectedImage is not null)
                 {
-                    <option value="@talent">@talent</option>
+                    <small>@_selectedImage.Name (cropped)</small>
                 }
-            </select>
+            </Accordion>
 
-            <label for="sa-risk">Risk</label>
-            <select id="sa-risk" @bind="_draft.Risk">
-                @foreach (var risk in Enum.GetValues<SARisk>())
-                {
-                    <option value="@risk">@risk</option>
-                }
-            </select>
+            <Accordion Title="Timeline">
+
+                <label for="sa-hire-date">Hire date</label>
+                <input id="sa-hire-date" type="date" @bind="_draft.HireDate" />
+
+                <label for="sa-last-promo-date">Last promotion date</label>
+                <input id="sa-last-promo-date" type="date" @bind="_draft.LastPromoDate" />
+
+                <label for="sa-next-promo-date">Projected next promotion date</label>
+                <input id="sa-next-promo-date" type="date" @bind="_draft.NextPromoDateProjected" />
+            </Accordion>
+
+            <Accordion Title="Performance Management">
+
+                <label for="sa-one-on-one">One-on-one document</label>
+                <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
+
+                <label for="sa-happiness">Current happiness</label>
+                <input id="sa-happiness" type="range" min="0" max="5" step="0.1" @bind="_draft.CurrentHappyiness" />
+
+                <label for="sa-si">Current SI</label>
+                <select id="sa-si" @bind="_draft.CurrentSI">
+                    @foreach (var si in Enum.GetValues<SASI>())
+                    {
+                        <option value="@si">@si</option>
+                    }
+                </select>
+
+                <label for="sa-talent">Talent</label>
+                <select id="sa-talent" @bind="_draft.Talent">
+                    @foreach (var talent in Enum.GetValues<SATalent>())
+                    {
+                        <option value="@talent">@talent</option>
+                    }
+                </select>
+
+                <label for="sa-risk">Risk</label>
+                <select id="sa-risk" @bind="_draft.Risk">
+                    @foreach (var risk in Enum.GetValues<SARisk>())
+                    {
+                        <option value="@risk">@risk</option>
+                    }
+                </select>
+            </Accordion>
+
+            <Accordion Title="Territory Alignment">
+                <fieldset>
+                    @for (var index = 0; index < _draft.Alignment.Count; index++)
+                    {
+                        var alignmentIndex = index;
+                        <div role="group">
+                            <input id="sa-alignment-@alignmentIndex" type="text" @bind="_draft.Alignment[alignmentIndex]" />
+                            <button type="button" class="secondary" aria-label="Remove alignment item @(alignmentIndex + 1)" @onclick="() => RemoveAlignment(alignmentIndex)">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+                            </button>
+                        </div>
+                    }
+                    <button type="button" class="secondary outline" style="width:100%" @onclick="AddAlignment"><FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" /></button>
+                </fieldset>
+            </Accordion>
 
             <footer>
                 <button type="button" class="secondary" @onclick="CloseModalAsync">Cancel</button>
@@ -164,7 +189,8 @@
             CurrentHappyiness = SA.CurrentHappyiness,
             CurrentSI = SA.CurrentSI,
             Talent = SA.Talent,
-            Risk = SA.Risk
+            Risk = SA.Risk,
+            Alignment = SA.Alignment?.ToList() ?? new List<string>()
         };
         _errorMessage = string.Empty;
         _isSaving = false;
@@ -173,6 +199,16 @@
     private Task HandleModalCancel()
     {
         return CloseModalAsync();
+    }
+
+    private void AddAlignment() => _draft.Alignment.Add(string.Empty);
+
+    private void RemoveAlignment(int index)
+    {
+        if (index >= 0 && index < _draft.Alignment.Count)
+        {
+            _draft.Alignment.RemoveAt(index);
+        }
     }
 
     private Task CloseModalAsync()
@@ -247,7 +283,8 @@
                     .Set(sa => sa.CurrentHappyiness, _draft.CurrentHappyiness)
                     .Set(sa => sa.CurrentSI, _draft.CurrentSI)
                     .Set(sa => sa.Talent, _draft.Talent)
-                    .Set(sa => sa.Risk, _draft.Risk);
+                    .Set(sa => sa.Risk, _draft.Risk)
+                    .Set(sa => sa.Alignment, _draft.Alignment);
 
                 savedSA = await SACollection.FindOneAndUpdateAsync(
                     filter,
