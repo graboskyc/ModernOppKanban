@@ -356,7 +356,8 @@
 				.ToListAsync();
 
 			_allExistingFeedback = feedbackLists
-				.SelectMany(feedback => feedback)
+				.Where(feedback => feedback is not null)
+				.SelectMany(feedback => feedback!)
 				.Where(feedback => !string.IsNullOrWhiteSpace(feedback.Id))
 				.GroupBy(feedback => feedback.Id, StringComparer.OrdinalIgnoreCase)
 				.Select(group => group.First())
@@ -364,7 +365,8 @@
 				.ToList();
 
             _allExistingChampions = championLists
-                .SelectMany(champions => champions)
+                .Where(champions => champions is not null)
+                .SelectMany(champions => champions!)
                 .Where(c => !string.IsNullOrWhiteSpace(c.Name))
 				.GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
@@ -380,10 +382,10 @@
 					SizingLink = metadata.SizingLink,
 					POCDoc = metadata.POCDoc,
 					SaLikelihood = metadata.SaLikelihood,
-					Assets = metadata.Assets.ToList(),
-					TechnicalChampions = metadata.TechnicalChampions.ToList(),
-					Feedback = metadata.Feedback.ToList(),
-					Events = metadata.Events.ToList(),
+					Assets = metadata.Assets?.ToList() ?? new List<OppAsset>(),
+					TechnicalChampions = metadata.TechnicalChampions?.ToList() ?? new List<TechnicalChampion>(),
+					Feedback = metadata.Feedback?.ToList() ?? new List<FeedbackItem>(),
+					Events = metadata.Events?.ToList() ?? new List<EventEntry>(),
 					MEDDPICC = metadata.MEDDPICC ?? new MEDDPICC()
 				};
 			}
