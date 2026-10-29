@@ -10,6 +10,7 @@
                 <li><a href="/Home">Home</a></li>
                 <li><a href="/Analytics">Analytics</a></li>
                 <li><a href="/SAs">SAs</a></li>
+                <li><button type="button" class="secondary notes-toggle" aria-expanded="@_isNotesOpen" @onclick="ToggleNotes">Notes</button></li>
                 <li>
                      <details class="dropdown">
                         <summary>
@@ -36,3 +37,17 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+<NotesPanel IsOpen="_isNotesOpen" IsOpenChanged="SetNotesPanelState" />
+
+@code {
+    private bool _isNotesOpen;
+
+    private void ToggleNotes() => _isNotesOpen = !_isNotesOpen;
+
+    private Task SetNotesPanelState(bool isOpen)
+    {
+        _isNotesOpen = isOpen;
+        return Task.CompletedTask;
+    }
+}

@@ -6,6 +6,11 @@ html, body {
     padding-top: 1.1rem;
 }
 
+.notes-toggle {
+    margin-bottom: 0;
+    padding: 0.35rem 0.75rem;
+}
+
 h1:focus {
     outline: none;
 }
