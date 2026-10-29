@@ -49,7 +49,7 @@ else
                                 }
                             </td>
                             <td>@sa.Title</td>
-                            <td>
+                            <td role="group">
                                 @if (!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
                                 {
                                     <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button">
@@ -95,7 +95,7 @@ else
                                     }
                                 </td>
                                 <td>@sa.Title</td>
-                                <td>
+                                <td role="group">
                                     @if (!string.IsNullOrWhiteSpace(sa.LinkToOneOnOneDoc) && Uri.IsWellFormedUriString(sa.LinkToOneOnOneDoc, UriKind.Absolute))
                                     {
                                         <a href="@sa.LinkToOneOnOneDoc" target="_blank" role="button">
