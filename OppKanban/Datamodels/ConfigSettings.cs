@@ -32,18 +32,18 @@ namespace OppKanban.Datamodels
         [BsonElement("salesStages")]
         public List<ConfigSettingSalesStage> SalesStages { get; set; } = new List<ConfigSettingSalesStage>()
         {
-          new ConfigSettingSalesStage() { StageName = "Engage", StageDescription = "Initial discovery phase", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Discover", StageDescription = "Initial discovery phase", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Scope", StageDescription = "Scope definition and assessment", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Technical Validation", StageDescription = "Solution validation", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = true },
-            new ConfigSettingSalesStage() { StageName = "Business Justification", StageDescription = "Biz validation", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = true },
-            new ConfigSettingSalesStage() { StageName = "Negotiate", StageDescription = "Negotiation phase", IsRenewalStage = false, IsClosedLostStage = false, IsValidationStage = false, IsWonStage = false },
-            new ConfigSettingSalesStage() { StageName = "Signature Ready", StageDescription = "Signature ready phase", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Renewal Discussion", StageDescription = "Discussion for renewal", IsRenewalStage = true, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Renewal Planning", StageDescription = "Planning for renewal", IsRenewalStage = true, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Proposal", StageDescription = "Proposal phase", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false , IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Closed Won", StageDescription = "Opportunity closed successfully", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = true, IsValidationStage = false },
-            new ConfigSettingSalesStage() { StageName = "Closed Lost", StageDescription = "Opportunity closed lost", IsRenewalStage = false, IsClosedLostStage = true, IsWonStage = false, IsValidationStage = false }
+          new ConfigSettingSalesStage() { StageName = "Engage", StageDescription = "Initial discovery phase", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Discover", StageDescription = "Initial discovery phase", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Scope", StageDescription = "Scope definition and assessment", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Technical Validation", StageDescription = "Solution validation", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = true },
+            new ConfigSettingSalesStage() { StageName = "Business Justification", StageDescription = "Biz validation", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = true },
+            new ConfigSettingSalesStage() { StageName = "Negotiate", StageDescription = "Negotiation phase", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsValidationStage = false, IsWonStage = false },
+            new ConfigSettingSalesStage() { StageName = "Signature Ready", StageDescription = "Signature ready phase", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Renewal Discussion", StageDescription = "Discussion for renewal", StageGate="", IsRenewalStage = true, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Renewal Planning", StageDescription = "Planning for renewal", StageGate="", IsRenewalStage = true, IsClosedLostStage = false, IsWonStage = false, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Proposal", StageDescription = "Proposal phase", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = false , IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Closed Won", StageDescription = "Opportunity closed successfully", StageGate="", IsRenewalStage = false, IsClosedLostStage = false, IsWonStage = true, IsValidationStage = false },
+            new ConfigSettingSalesStage() { StageName = "Closed Lost", StageDescription = "Opportunity closed lost", StageGate="", IsRenewalStage = false, IsClosedLostStage = true, IsWonStage = false, IsValidationStage = false }
         };
 
         [BsonElement("lastEditTime")]
@@ -152,6 +152,9 @@ namespace OppKanban.Datamodels
         public string StageName { get; set; } = string.Empty;
         [BsonElement("description")]
         public string StageDescription { get; set; } = string.Empty;
+        [BsonElement("gate")]
+        public string StageGate { get; set; } = string.Empty;
+        
         [BsonElement("isRenewalStage")]
         public bool IsRenewalStage {get;set;}
         [BsonElement("isClosedLostStage")]

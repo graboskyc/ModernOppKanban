@@ -37,6 +37,10 @@
                     Description
                     <InputText @bind-Value="stage.StageDescription" />
                 </label>
+                <label>
+                    Stage gate
+                    <InputTextArea @bind-Value="stage.StageGate" />
+                </label>
                 <fieldset>
                     <legend>Stage type</legend>
                     <InputCheckbox @bind-Value="stage.IsRenewalStage" /> <label>Renewal stage</label>
@@ -81,6 +85,7 @@
             {
                 StageName = stage.StageName,
                 StageDescription = stage.StageDescription,
+                StageGate = stage.StageGate,
                 IsRenewalStage = stage.IsRenewalStage,
                 IsClosedLostStage = stage.IsClosedLostStage,
                 IsWonStage = stage.IsWonStage,

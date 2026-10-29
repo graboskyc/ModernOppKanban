@@ -108,7 +108,7 @@ else
 				<header class="kanban-lane-header">
 					<div>
 						<h2>@StageHelper.GetStageName(stage)</h2>
-						<small>@StageHelper.GetStageDescription(stage)</small>
+						<small title="@(string.IsNullOrWhiteSpace(stage.StageGate) ? null : stage.StageGate)">@StageHelper.GetStageDescription(stage)</small>
 					</div>
 					<span class="kanban-count">@stageOpps.Count</span>
 				</header>
