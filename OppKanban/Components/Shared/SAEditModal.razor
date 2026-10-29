@@ -84,7 +84,15 @@
             <Accordion Title="Performance Management">
 
                 <label for="sa-one-on-one">One-on-one document</label>
-                <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
+                <div role="group">
+                    <input id="sa-one-on-one" type="url" @bind="_draft.LinkToOneOnOneDoc" />
+                    @if (_draft.LinkToOneOnOneDoc.StartsWith("http"))
+                    {
+                        <a href="@_draft.LinkToOneOnOneDoc" target="_blank" role="button" class="secondary">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Microsoft.FluentUI.AspNetCore.Components.Color.Custom" CustomColor="#e48500" />
+                        </a>
+                    }
+                </div>
 
                 <label for="sa-happiness">Current happiness</label>
                 <input id="sa-happiness" type="range" min="0" max="5" step="0.1" @bind="_draft.CurrentHappyiness" />
