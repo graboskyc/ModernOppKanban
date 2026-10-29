@@ -1,8 +1,8 @@
 @using MongoDB.Driver
 @using OppKanban.Datamodels
+@using HeyRed.MarkdownSharp
 @inject IMongoCollection<NotesDocument> NotesCollection
 @inject ILogger<NotesPanel> Logger
-@inject IJSRuntime JS
 
 <div class="notes-backdrop @(IsOpen ? "is-visible" : string.Empty)" aria-hidden="true" @onclick="CloseAsync"></div>
 <aside class="notes-panel @(IsOpen ? "is-open" : string.Empty)"
@@ -22,26 +22,33 @@
     {
         <p class="notes-message" role="status">Loading notes…</p>
     }
+    else if (_isEditing)
+    {
+        <textarea @ref="_markdownEditor"
+                  class="notes-editor"
+                  aria-label="Shared workspace notes in Markdown"
+                  placeholder="Write your notes in Markdown..."
+                  spellcheck="true"
+                  @bind="_contentMarkdown"
+                  @bind:event="oninput"></textarea>
+    }
     else
     {
-        <div class="notes-toolbar" role="toolbar" aria-label="Notes formatting">
-            <button type="button" aria-label="Bold" title="Bold" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("bold")'><strong>B</strong></button>
-            <button type="button" aria-label="Italic" title="Italic" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("italic")'><em>I</em></button>
-            <button type="button" aria-label="Underline" title="Underline" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("underline")'><u>U</u></button>
-            <button type="button" aria-label="Heading" title="Heading" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("formatBlock", "h2")'>H</button>
-            <button type="button" aria-label="Bulleted list" title="Bulleted list" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("insertUnorderedList")'>• List</button>
-            <button type="button" aria-label="Numbered list" title="Numbered list" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("insertOrderedList")'>1. List</button>
-            <button type="button" aria-label="Link" title="Link" @onmousedown:preventDefault="true" @onclick="CreateLinkAsync">Link</button>
-            <button type="button" aria-label="Clear formatting" title="Clear formatting" @onmousedown:preventDefault="true" @onclick='() => ExecuteCommandAsync("removeFormat")'>Clear</button>
+        <div class="notes-editor notes-preview"
+             role="button"
+             tabindex="0"
+             aria-label="Edit shared workspace notes"
+             @onclick="BeginEditing"
+             @onkeydown="HandlePreviewKeyDown">
+            @if (string.IsNullOrWhiteSpace(_contentMarkdown))
+            {
+                <span class="notes-placeholder">Write your notes...</span>
+            }
+            else
+            {
+                @((MarkupString)_markdown.Transform(_contentMarkdown))
+            }
         </div>
-        <div id="notes-editor"
-             class="notes-editor"
-             contenteditable="true"
-             role="textbox"
-             aria-label="Shared workspace notes"
-             aria-multiline="true"
-             data-placeholder="Write your notes..."
-             spellcheck="true"></div>
     }
 
     @if (!string.IsNullOrEmpty(_errorMessage))
@@ -51,7 +58,7 @@
 
     <footer class="notes-footer">
         <span class="notes-message" role="status">@_statusMessage</span>
-        <button type="button" @onclick="SaveAsync" disabled="@(_isLoading || _isSaving || !_editorInitialized)">
+        <button type="button" @onclick="SaveAsync" disabled="@(_isLoading || _isSaving)">
             @(_isSaving ? "Saving…" : "Save")
         </button>
     </footer>
@@ -59,13 +66,15 @@
 
 @code {
     private const string DocumentId = "shared";
-    private string _contentHtml = string.Empty;
+    private static readonly Markdown _markdown = new();
+    private ElementReference _markdownEditor;
+    private string _contentMarkdown = string.Empty;
     private string _statusMessage = string.Empty;
     private string? _errorMessage;
     private bool _isLoading = true;
     private bool _isSaving;
-    private bool _editorInitialized;
-    private bool _editorInitializationFailed;
+    private bool _isEditing;
+    private bool _focusEditorAfterRender;
 
     [Parameter]
     public bool IsOpen { get; set; }
@@ -80,7 +89,7 @@
             var document = await NotesCollection
                 .Find(note => note.Id == DocumentId)
                 .FirstOrDefaultAsync();
-            _contentHtml = document?.ContentHtml ?? string.Empty;
+            _contentMarkdown = document?.ContentMarkdown ?? document?.LegacyContentHtml ?? string.Empty;
         }
         catch (MongoException exception)
         {
@@ -95,20 +104,35 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!_isLoading && !_editorInitialized && !_editorInitializationFailed)
+        if (!_focusEditorAfterRender)
         {
-            try
-            {
-                await JS.InvokeVoidAsync("notesPanel.setHtml", "notes-editor", _contentHtml);
-                _editorInitialized = true;
-            }
-            catch (JSException exception)
-            {
-                Logger.LogError(exception, "Failed to initialize the notes editor.");
-                _editorInitializationFailed = true;
-                _errorMessage = "The notes editor could not be initialized. Try reloading the page.";
-                StateHasChanged();
-            }
+            return;
+        }
+
+        _focusEditorAfterRender = false;
+        try
+        {
+            await _markdownEditor.FocusAsync();
+        }
+        catch (JSException exception)
+        {
+            Logger.LogError(exception, "Failed to focus the shared notes editor.");
+            _errorMessage = "The notes editor could not be focused.";
+            StateHasChanged();
+        }
+    }
+
+    private void BeginEditing()
+    {
+        _isEditing = true;
+        _focusEditorAfterRender = true;
+    }
+
+    private void HandlePreviewKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key is "Enter" or " ")
+        {
+            BeginEditing();
         }
     }
 
@@ -120,17 +144,17 @@
 
         try
         {
-            _contentHtml = await JS.InvokeAsync<string>("notesPanel.getHtml", "notes-editor");
             var document = new NotesDocument
             {
                 Id = DocumentId,
-                ContentHtml = _contentHtml,
+                ContentMarkdown = _contentMarkdown,
                 LastEditTime = DateTime.UtcNow
             };
             await NotesCollection.ReplaceOneAsync(
                 note => note.Id == DocumentId,
                 document,
                 new ReplaceOptions { IsUpsert = true });
+            _isEditing = false;
             _statusMessage = $"Saved at {document.LastEditTime.ToLocalTime():t}";
         }
         catch (MongoException exception)
@@ -138,40 +162,9 @@
             Logger.LogError(exception, "Failed to save shared notes.");
             _errorMessage = "Notes could not be saved. Check the database connection and try again.";
         }
-        catch (JSException exception)
-        {
-            Logger.LogError(exception, "Failed to read the notes editor contents.");
-            _errorMessage = "Notes could not be read from the editor. Try reloading the page.";
-        }
         finally
         {
             _isSaving = false;
-        }
-    }
-
-    private async Task ExecuteCommandAsync(string command, string? value = null)
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("notesPanel.executeCommand", command, value);
-        }
-        catch (JSException exception)
-        {
-            Logger.LogError(exception, "Failed to format the shared notes.");
-            _errorMessage = "The notes could not be formatted. Try reloading the page.";
-        }
-    }
-
-    private async Task CreateLinkAsync()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("notesPanel.createLink");
-        }
-        catch (JSException exception)
-        {
-            Logger.LogError(exception, "Failed to add a link to the shared notes.");
-            _errorMessage = "A link could not be added to the notes.";
         }
     }
 

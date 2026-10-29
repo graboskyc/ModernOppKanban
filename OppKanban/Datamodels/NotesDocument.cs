@@ -10,8 +10,13 @@ public sealed class NotesDocument
     [BsonRepresentation(BsonType.String)]
     public string Id { get; set; } = "shared";
 
+    [BsonElement("contentMarkdown")]
+    [BsonIgnoreIfNull]
+    public string? ContentMarkdown { get; set; }
+
     [BsonElement("contentHtml")]
-    public string ContentHtml { get; set; } = string.Empty;
+    [BsonIgnoreIfNull]
+    public string? LegacyContentHtml { get; set; }
 
     [BsonElement("lastEditTime")]
     public DateTime LastEditTime { get; set; } = DateTime.UtcNow;

@@ -54,8 +54,8 @@ else
 	</div>
 	
 	<div class="grid">
-		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" />
-		<Chart_OppStage @key="StageChartKey" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
+		<Chart_OppStage @key="StageChartKey(false)" Opportunities="FilteredOpportunities" />
+		<Chart_OppStage @key="StageChartKey(true)" Opportunities="FilteredOpportunities" ExcludeClosed="true" />
 	</div>
 
 	<div class="grid">
@@ -70,7 +70,7 @@ else
 	private int _chartsRenderVersion;
 	private bool _isLoading = true;
 	private string _errorMessage = string.Empty;
-	private string StageChartKey => $"stage-{_chartsRenderVersion}";
+	private string StageChartKey(bool excludeClosed) => $"stage-{excludeClosed}-{_chartsRenderVersion}";
 	private string OwnershipChartKey(bool excludeClosed) => $"ownership-{excludeClosed}-{_chartsRenderVersion}";
 	private string WinLossChartKey => $"winloss-{_chartsRenderVersion}";
 
