@@ -91,6 +91,23 @@
 
 .notes-preview ::deep * {
     color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.notes-preview ::deep :is(ul, ol) {
+    padding-inline-start: 1.5rem;
+}
+
+.notes-preview ::deep li {
+    display: list-item;
+    list-style-position: outside;
+    list-style-type: square;
+    color: #fff;
+}
+
+.notes-preview ::deep li::marker {
+    color: #fff;
 }
 
 .notes-preview:hover {
